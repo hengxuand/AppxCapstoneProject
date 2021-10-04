@@ -1,0 +1,10 @@
+name: csvtk
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pyqtgraph=0.12.2
+  - vtk=9.0.*
+  - numpy=1.21.*
+  - pyqt=5.12.*
