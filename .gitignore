@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+vtk/
+vtk_python_openVR_64_bit/
+
 # Distribution / packaging
 .Python
 build/

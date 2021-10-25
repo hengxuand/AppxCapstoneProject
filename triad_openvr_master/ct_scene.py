@@ -2,6 +2,8 @@
 
 import os
 import vtk
+import sys
+import time
 
 # Set up paths to data files
 curdir = os.path.dirname(__file__)
@@ -12,7 +14,7 @@ LIVER_FILE = os.path.join(curdir, '../data/Liver.stl')
 renderer = vtk.vtkRenderer()
 
 render_window = vtk.vtkRenderWindow()
-render_window.SetSize(600,600)
+render_window.SetSize(600, 600)
 render_window.AddRenderer(renderer)
 
 interaction_style = vtk.vtkInteractorStyleTrackballCamera()

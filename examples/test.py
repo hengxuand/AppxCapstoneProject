@@ -3,6 +3,7 @@ import time
 import openvr
 
 openvr.init(openvr.VRApplication_Scene)
+print("init")
 poses = []  # will be populated with proper type after first call
 for i in range(100):
     poses, _ = openvr.VRCompositor().waitGetPoses(poses, None)
