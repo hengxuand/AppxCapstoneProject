@@ -1,5 +1,6 @@
 """Example showing a volume rendered CT scan and a polygonal liver"""
 
+import triad_openvr
 import os
 import vtk
 import sys
@@ -7,19 +8,16 @@ import time
 from vtkmodules.vtkFiltersSources import vtkArrowSource
 
 
-def callback_func(caller, timer_event):
-    actor.RotateZ(1)
-    actor.RotateY(1)
-    render_window.Render()
-
-
-refresh_rate = 60
-
-
 # Set up paths to data files
 curdir = os.path.dirname(__file__)
 CT_FILE = os.path.join(curdir, '../data/volume-105.nhdr')
-LIVER_FILE = os.path.join(curdir, '../data/Liver.stl')
+NEEDLE_FILE = os.path.join(curdir, '../data/handler.stl')
+
+refresh_rate = 0.5
+
+v = triad_openvr.triad_openvr()
+position = v.devices["controller_1"].get_pose_euler()
+
 
 # Initialize renderer, window, and the specific interaction (e.g., mouse mapping) style
 renderer = vtk.vtkRenderer()
@@ -33,6 +31,15 @@ window_interactor = vtk.vtkRenderWindowInteractor()
 window_interactor.SetRenderWindow(render_window)
 window_interactor.SetInteractorStyle(interaction_style)
 window_interactor.Initialize()
+
+
+def callback_func(caller, timer_event):
+    position = v.devices["controller_1"].get_pose_euler()
+    print(position)
+    actor.SetPosition(position[0]*-700, position[1]
+                      * 700 - 300, position[2]*-700)
+    render_window.Render()
+
 
 window_interactor.CreateRepeatingTimer(int(1/refresh_rate))
 window_interactor.AddObserver("TimerEvent", callback_func)
@@ -79,31 +86,32 @@ volume_property.SetSpecular(0.2)
 volume_property.SetSpecularPower(10.0)
 volume_property.SetScalarOpacityUnitDistance(0.8919)
 
+
 volume = vtk.vtkVolume()
 volume.SetMapper(volume_mapper)
 volume.SetProperty(volume_property)
+volume.RotateX(-90)
 renderer.AddVolume(volume)
-
 
 # Load the polygonal (e.g., surface) data of the liver. This is stored
 # as an STL.
 
 
 # ==========================Arrow=====================================
-arrowSource = vtk.vtkArrowSource()
+# arrowSource = vtk.vtkArrowSource()
 
-mapper = vtk.vtkPolyDataMapper()
-mapper.SetInputConnection(arrowSource.GetOutputPort())
-mapper.SetScalarVisibility(0)
-actor = vtk.vtkActor()
-actor.SetMapper(mapper)
+# mapper = vtk.vtkPolyDataMapper()
+# mapper.SetInputConnection(arrowSource.GetOutputPort())
+# mapper.SetScalarVisibility(0)
+# actor = vtk.vtkActor()
+# actor.SetMapper(mapper)
 
 # ===============================================================
 
 
 # ========================STL=======================================
 reader = vtk.vtkSTLReader()
-reader.SetFileName(LIVER_FILE)
+reader.SetFileName(NEEDLE_FILE)
 
 mapper = vtk.vtkPolyDataMapper()
 mapper.SetInputConnection(reader.GetOutputPort())
@@ -114,11 +122,12 @@ actor.SetMapper(mapper)
 
 # ===============================================================
 
-
+actor.SetPosition(0, 0, 0)
 actor.GetProperty().SetColor([1, 1, 1])
 actor.GetProperty().SetOpacity(1)
 actor.GetProperty().SetInterpolationToPhong()
 actor.GetProperty().SetRepresentationToSurface()
+actor.RotateY(30)
 renderer.AddActor(actor)
 
 renderer.ResetCamera()

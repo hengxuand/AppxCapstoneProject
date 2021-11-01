@@ -115,7 +115,7 @@ if __name__ == '__main__':
     try:
         while left_id is None or right_id is None:
             left_id, right_id = get_controller_ids(vrsystem)
-            if left_id and right_id:
+            if right_id:
                 break
             print("Waiting for controllers...")
             time.sleep(1.0)
@@ -123,7 +123,7 @@ if __name__ == '__main__':
         print("Control+C pressed, shutting down...")
         openvr.shutdown()
 
-    print("Left controller ID: " + str(left_id))
+    # print("Left controller ID: " + str(left_id))
     print("Right controller ID: " + str(right_id))
     print("===========================")
 
@@ -139,12 +139,12 @@ if __name__ == '__main__':
     try:
         while True:
             time.sleep(1.0 / reading_rate_hz)
-            result, pControllerState = vrsystem.getControllerState(left_id)
-            d = from_controller_state_to_dict(pControllerState)
-            if show_only_new_events and last_unPacketNum_left != d['unPacketNum']:
-                last_unPacketNum_left = d['unPacketNum']
-                print("Left controller:")
-                pp.pprint(d)
+            # result, pControllerState = vrsystem.getControllerState(left_id)
+            # d = from_controller_state_to_dict(pControllerState)
+            # if show_only_new_events and last_unPacketNum_left != d['unPacketNum']:
+            #     last_unPacketNum_left = d['unPacketNum']
+            #     print("Left controller:")
+            #     pp.pprint(d)
 
             result, pControllerState = vrsystem.getControllerState(right_id)
             d = from_controller_state_to_dict(pControllerState)

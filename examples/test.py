@@ -1,14 +1,27 @@
-import sys
+import triad_openvr
 import time
-import openvr
+import sys
 
-openvr.init(openvr.VRApplication_Scene)
-print("init")
-poses = []  # will be populated with proper type after first call
-for i in range(100):
-    poses, _ = openvr.VRCompositor().waitGetPoses(poses, None)
-    hmd_pose = poses[openvr.k_unTrackedDeviceIndex_Hmd]
-    print(hmd_pose.mDeviceToAbsoluteTracking)
-    sys.stdout.flush()
-    time.sleep(0.2)
-openvr.shutdown()
+v = triad_openvr.triad_openvr()
+v.print_discovered_objects()
+
+if len(sys.argv) == 1:
+    interval = 1/250
+elif len(sys.argv) == 2:
+    interval = 1/float(sys.argv[1])
+else:
+    print("Invalid number of arguments")
+    interval = False
+
+print(v.devices["controller_1"].get_pose_euler())
+if interval:
+    while(True):
+        start = time.time()
+        txt = ""
+        for each in v.devices["controller_1"].get_pose_euler():
+            txt += "%.4f" % each
+            txt += " "
+        print("\r" + txt, end="")
+        sleep_time = interval-(time.time()-start)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
