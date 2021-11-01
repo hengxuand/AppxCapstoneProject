@@ -4,6 +4,17 @@ import os
 import vtk
 import sys
 import time
+from vtkmodules.vtkFiltersSources import vtkArrowSource
+
+
+def callback_func(caller, timer_event):
+    actor.RotateZ(1)
+    actor.RotateY(1)
+    render_window.Render()
+
+
+refresh_rate = 60
+
 
 # Set up paths to data files
 curdir = os.path.dirname(__file__)
@@ -23,7 +34,13 @@ window_interactor.SetRenderWindow(render_window)
 window_interactor.SetInteractorStyle(interaction_style)
 window_interactor.Initialize()
 
+window_interactor.CreateRepeatingTimer(int(1/refresh_rate))
+window_interactor.AddObserver("TimerEvent", callback_func)
+
+
 # Load the CT scan
+
+
 reader = vtk.vtkNrrdReader()
 reader.SetFileName(CT_FILE)
 reader.Update()
@@ -67,8 +84,24 @@ volume.SetMapper(volume_mapper)
 volume.SetProperty(volume_property)
 renderer.AddVolume(volume)
 
+
 # Load the polygonal (e.g., surface) data of the liver. This is stored
 # as an STL.
+
+
+# ==========================Arrow=====================================
+arrowSource = vtk.vtkArrowSource()
+
+mapper = vtk.vtkPolyDataMapper()
+mapper.SetInputConnection(arrowSource.GetOutputPort())
+mapper.SetScalarVisibility(0)
+actor = vtk.vtkActor()
+actor.SetMapper(mapper)
+
+# ===============================================================
+
+
+# ========================STL=======================================
 reader = vtk.vtkSTLReader()
 reader.SetFileName(LIVER_FILE)
 
@@ -78,8 +111,12 @@ mapper.SetScalarVisibility(0)
 
 actor = vtk.vtkActor()
 actor.SetMapper(mapper)
-actor.GetProperty().SetColor([0.2, 1.0, 0.2])
-actor.GetProperty().SetOpacity(1.0)
+
+# ===============================================================
+
+
+actor.GetProperty().SetColor([1, 1, 1])
+actor.GetProperty().SetOpacity(1)
 actor.GetProperty().SetInterpolationToPhong()
 actor.GetProperty().SetRepresentationToSurface()
 renderer.AddActor(actor)

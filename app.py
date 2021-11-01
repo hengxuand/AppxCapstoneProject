@@ -4,10 +4,12 @@ import os
 import vtk
 import sys
 import time
-import openvr
-from ctypes import *
+# import openvr
+# import ctypes
 
-libc = CDLL("./vtk_python_openVR_64_bit/VTK/bin/vtkRenderingOpenVR-8.1.dll")
+
+# libc = ctypes.cdll.LoadLibrary(
+#     "vtk_python_openVR_64_bit/VTK/bin/vtkRenderingOpenVR-8.1.dll")
 
 # Set up paths to data files
 curdir = os.path.dirname(__file__)

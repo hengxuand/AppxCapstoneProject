@@ -5,10 +5,18 @@ import vtk
 import sys
 import time
 
+
+def callback_func(caller, timer_event):
+    actor.RotateZ(1)
+    window.Render()
+
+
 # Set up paths to data files
 curdir = os.path.dirname(__file__)
 CT_FILE = os.path.join(curdir, '../data/volume-105.nhdr')
 LIVER_FILE = os.path.join(curdir, '../data/Liver.stl')
+
+refresh_rate = 60
 
 # Initialize renderer, window, and the specific interaction (e.g., mouse mapping) style
 renderer = vtk.vtkRenderer()
@@ -22,6 +30,10 @@ window_interactor = vtk.vtkRenderWindowInteractor()
 window_interactor.SetRenderWindow(render_window)
 window_interactor.SetInteractorStyle(interaction_style)
 window_interactor.Initialize()
+
+
+window_interactor.CreateRepeatingTimer(int(1/refresh_rate))
+window_interactor.AddObserver("TimerEvent", callback_func)
 
 # Load the CT scan
 reader = vtk.vtkNrrdReader()
@@ -79,7 +91,7 @@ mapper.SetScalarVisibility(0)
 actor = vtk.vtkActor()
 actor.SetMapper(mapper)
 actor.GetProperty().SetColor([0.2, 1.0, 0.2])
-actor.GetProperty().SetOpacity(1.0)
+actor.GetProperty().SetOpacity(0)
 actor.GetProperty().SetInterpolationToPhong()
 actor.GetProperty().SetRepresentationToSurface()
 renderer.AddActor(actor)
