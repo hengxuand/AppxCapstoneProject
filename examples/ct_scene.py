@@ -3,9 +3,6 @@
 import triad_openvr
 import os
 import vtk
-import sys
-import time
-from vtkmodules.vtkFiltersSources import vtkArrowSource
 
 
 # Set up paths to data files
@@ -13,7 +10,7 @@ curdir = os.path.dirname(__file__)
 CT_FILE = os.path.join(curdir, '../data/volume-105.nhdr')
 NEEDLE_FILE = os.path.join(curdir, '../data/handler.stl')
 
-refresh_rate = 0.5
+REFRESH_RATE = 0.5
 
 v = triad_openvr.triad_openvr()
 position = v.devices["controller_1"].get_pose_euler()
@@ -36,12 +33,13 @@ window_interactor.Initialize()
 def callback_func(caller, timer_event):
     position = v.devices["controller_1"].get_pose_euler()
     print(position)
-    actor.SetPosition(position[0]*-700, position[1]
+    actor.SetPosition(position[0] * -700, position[1]
                       * 700 - 300, position[2]*-700)
+
     render_window.Render()
 
 
-window_interactor.CreateRepeatingTimer(int(1/refresh_rate))
+window_interactor.CreateRepeatingTimer(int(1/REFRESH_RATE))
 window_interactor.AddObserver("TimerEvent", callback_func)
 
 
