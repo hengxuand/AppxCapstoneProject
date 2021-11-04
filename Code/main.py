@@ -14,8 +14,9 @@ class Window(QMainWindow):
         super().__init__()
 
         self.w = None
-        self.ct_path = ""
-        self.stl_path = ""
+        self.curdir = os.path.dirname(__file__)
+        self.ct_path = os.path.join(self.curdir, '../data/volume-105.nhdr')
+        self.stl_path = os.path.join(self.curdir, '../data/Liver.stl')
         self.title = "File upload window"
         self.top = 100
         self.left = 100
@@ -24,12 +25,14 @@ class Window(QMainWindow):
 
         self.BrowseButton_ct = QPushButton("Browse CT File", self)
         self.BrowseButton_ct.move(200, 175)
-        self.BrowseButton_ct.setToolTip("<h4>Browse file you want to up load</h4>")
+        self.BrowseButton_ct.setToolTip(
+            "<h4>Browse file you want to up load</h4>")
         self.BrowseButton_ct.clicked.connect(self.ct_browseButton_handler)
 
         self.BrowseButton_stl = QPushButton("Browse stl File", self)
         self.BrowseButton_stl.move(350, 175)
-        self.BrowseButton_stl.setToolTip("<h4>Browse file you want to up load</h4>")
+        self.BrowseButton_stl.setToolTip(
+            "<h4>Browse file you want to up load</h4>")
         self.BrowseButton_stl.clicked.connect(self.stl_browseButton_handler)
 
         self.pushButton = QPushButton("Upload", self)
