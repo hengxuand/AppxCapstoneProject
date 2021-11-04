@@ -64,6 +64,16 @@ class RenderWindow(Qt.QMainWindow):
 
         # get sources
         sources = self.get_sources(ct_file, stl_file)
+
+        print("render main screen")
+        main_ren = vtk.vtkRenderer()
+        self.rw.AddRenderer(main_ren)
+        main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
+
+        camera = main_ren.GetActiveCamera()
+        camera.Azimuth(30)
+        camera.Elevation(30)
+
         for i in range(2):
             print("render screen " + str(i))
             ren = vtk.vtkRenderer()
@@ -116,7 +126,6 @@ class RenderWindow(Qt.QMainWindow):
             else:
                 ren.SetActiveCamera(camera)
 
-            test change
             stlMapper = vtk.vtkPolyDataMapper()
             stlMapper.SetInputConnection(sources[1].GetOutputPort())
             stlMapper.SetScalarVisibility(0)
