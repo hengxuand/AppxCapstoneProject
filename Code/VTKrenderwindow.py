@@ -116,6 +116,7 @@ class RenderWindow(Qt.QMainWindow):
             else:
                 ren.SetActiveCamera(camera)
 
+            test change
             stlMapper = vtk.vtkPolyDataMapper()
             stlMapper.SetInputConnection(sources[1].GetOutputPort())
             stlMapper.SetScalarVisibility(0)
