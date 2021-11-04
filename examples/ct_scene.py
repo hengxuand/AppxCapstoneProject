@@ -51,7 +51,9 @@ window_interactor.Initialize()
 
 
 def callback_func(caller, timer_event):
+    # fetch the position data
     position = v.devices["controller_1"].get_pose_euler()
+    # fetch the controller button data
     controller_status = v.devices["controller_1"].get_controller_inputs()
     txt = ""
     if not hasattr(position, '__iter__'):
