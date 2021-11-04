@@ -13,6 +13,25 @@ class RenderWindow(Qt.QMainWindow):
         self.setWindowTitle("VTK Render Window")
 
         self.REFRESH_RATE = 60
+        # setup vive controller & check the if controller is in the range
+        self.vivecontrol = triad_openvr.triad_openvr()
+
+        while(True):
+            position = self.vivecontrol.devices["controller_1"].get_pose_euler(
+            )
+
+            start = time.time()
+            message = ""
+            if not hasattr(position, '__iter__'):
+                message = "Waiting for controller."
+                print("\r" + message, end="")
+                sleep_time = 1/self.REFRESH_RATE-(time.time()-start)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+            else:
+                print("\r" + "Start to initial VTK window.", end="")
+                break
+
         print("VTK Render Window Start")
         # setup Qt frame
         self.frame = Qt.QFrame()
@@ -37,25 +56,6 @@ class RenderWindow(Qt.QMainWindow):
         self.iren.AddObserver("TimerEvent", self.callback_func)
         self.iren.SetRenderWindow(self.rw)
 
-        # setup vive controller
-        self.vivecontrol = triad_openvr.triad_openvr()
-
-        while(True):
-            position = self.vivecontrol.devices["controller_1"].get_pose_euler(
-            )
-
-            start = time.time()
-            message = ""
-            if not hasattr(position, '__iter__'):
-                message = "Waiting for controller."
-                print("\r" + message, end="")
-                sleep_time = 1/self.REFRESH_RATE-(time.time()-start)
-                if sleep_time > 0:
-                    time.sleep(sleep_time)
-            else:
-                print("\r" + "Start to initial VTK window.", end="")
-                break
-
         # Define viewport ranges.
         xmins = [0, .5]
         xmaxs = [0.5, 1]
@@ -64,7 +64,15 @@ class RenderWindow(Qt.QMainWindow):
 
         # get sources
         sources = self.get_sources(ct_file, stl_file)
+        # create tumor actor to be added later on
+        stlMapper = vtk.vtkPolyDataMapper()
+        stlMapper.SetInputConnection(sources[1].GetOutputPort())
+        stlMapper.SetScalarVisibility(0)
+        tumor_actor = vtk.vtkActor()
+        tumor_actor.SetMapper(stlMapper)
+        tumor_actor.RotateX(-90)
 
+        # render main screen
         print("render main screen")
         main_ren = vtk.vtkRenderer()
         self.rw.AddRenderer(main_ren)
@@ -74,70 +82,123 @@ class RenderWindow(Qt.QMainWindow):
         camera.Azimuth(30)
         camera.Elevation(30)
 
-        for i in range(2):
-            print("render screen " + str(i))
-            ren = vtk.vtkRenderer()
-            self.rw.AddRenderer(ren)
-            ren.SetViewport(xmins[i], ymins[i], xmaxs[i], ymaxs[i])
+        color_transfer_function = vtk.vtkColorTransferFunction()
+        color_transfer_function.AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0)
+        color_transfer_function.AddRGBPoint(-16,
+                                            0.73, 0.25, 0.30, 0.49, .61)
+        color_transfer_function.AddRGBPoint(
+            641, .90, .82, .56, .5, 0.0)
+        color_transfer_function.AddRGBPoint(
+            3070, 1.0, 1.0, 1.0, .5, 0.0)
+        color_transfer_function.AddRGBPoint(
+            3071, 0.0, .333, 1.0, .5, 0.0)
 
-            # Share the camera between viewports.
-            if i == 0:
-                camera = ren.GetActiveCamera()
-                camera.Azimuth(30)
-                camera.Elevation(30)
+        opacity_transfer_function = vtk.vtkPiecewiseFunction()
+        opacity_transfer_function.AddPoint(-3024, 0, 0.5, 0.0)
+        opacity_transfer_function.AddPoint(-16, 0, .49, .61)
+        opacity_transfer_function.AddPoint(641, .72, .5, 0.0)
+        opacity_transfer_function.AddPoint(3071, .71, 0.5, 0.0)
 
-                color_transfer_function = vtk.vtkColorTransferFunction()
-                color_transfer_function.AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0)
-                color_transfer_function.AddRGBPoint(-16,
-                                                    0.73, 0.25, 0.30, 0.49, .61)
-                color_transfer_function.AddRGBPoint(
-                    641, .90, .82, .56, .5, 0.0)
-                color_transfer_function.AddRGBPoint(
-                    3070, 1.0, 1.0, 1.0, .5, 0.0)
-                color_transfer_function.AddRGBPoint(
-                    3071, 0.0, .333, 1.0, .5, 0.0)
+        volMapper = vtk.vtkGPUVolumeRayCastMapper()
+        volMapper.SetInputConnection(sources[0].GetOutputPort())
 
-                opacity_transfer_function = vtk.vtkPiecewiseFunction()
-                opacity_transfer_function.AddPoint(-3024, 0, 0.5, 0.0)
-                opacity_transfer_function.AddPoint(-16, 0, .49, .61)
-                opacity_transfer_function.AddPoint(641, .72, .5, 0.0)
-                opacity_transfer_function.AddPoint(3071, .71, 0.5, 0.0)
+        volume_property = vtk.vtkVolumeProperty()
+        volume_property.SetColor(color_transfer_function)
+        volume_property.SetScalarOpacity(opacity_transfer_function)
+        volume_property.SetInterpolationTypeToLinear()
+        volume_property.ShadeOn()
+        volume_property.SetAmbient(0.1)
+        volume_property.SetDiffuse(0.9)
+        volume_property.SetSpecular(0.2)
+        volume_property.SetSpecularPower(10.0)
+        volume_property.SetScalarOpacityUnitDistance(0.8919)
 
-                volMapper = vtk.vtkGPUVolumeRayCastMapper()
-                volMapper.SetInputConnection(sources[0].GetOutputPort())
+        volume = vtk.vtkVolume()
+        volume.SetMapper(volMapper)
+        volume.SetProperty(volume_property)
+        volume.RotateX(-90)
+        main_ren.AddVolume(volume)
+        main_ren.AddActor(self.needle_actor)
+        main_ren.AddActor(tumor_actor)
 
-                volume_property = vtk.vtkVolumeProperty()
-                volume_property.SetColor(color_transfer_function)
-                volume_property.SetScalarOpacity(opacity_transfer_function)
-                volume_property.SetInterpolationTypeToLinear()
-                volume_property.ShadeOn()
-                volume_property.SetAmbient(0.1)
-                volume_property.SetDiffuse(0.9)
-                volume_property.SetSpecular(0.2)
-                volume_property.SetSpecularPower(10.0)
-                volume_property.SetScalarOpacityUnitDistance(0.8919)
+        main_ren.ResetCamera()
+        main_ren.ResetCameraClippingRange()
 
-                volume = vtk.vtkVolume()
-                volume.SetMapper(volMapper)
-                volume.SetProperty(volume_property)
-                volume.RotateX(-90)
-                ren.AddVolume(volume)
-                ren.AddActor(self.needle_actor)
-            else:
-                ren.SetActiveCamera(camera)
+        # render side window
+        print("render side screen 1")
+        side_ren1 = vtk.vtkRenderer()
+        self.rw.AddRenderer(side_ren1)
+        side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
+        side_ren1.SetActiveCamera(camera)
+        side_ren1.AddActor(tumor_actor)
 
-            stlMapper = vtk.vtkPolyDataMapper()
-            stlMapper.SetInputConnection(sources[1].GetOutputPort())
-            stlMapper.SetScalarVisibility(0)
+        side_ren1.ResetCamera()
+        side_ren1.ResetCameraClippingRange()
 
-            # Create an actor
-            actor = vtk.vtkActor()
-            actor.SetMapper(stlMapper)
-            actor.RotateX(-90)
-            ren.AddActor(actor)
+        # for i in range(2):
+        #     print("render screen " + str(i))
+        #     ren = vtk.vtkRenderer()
+        #     self.rw.AddRenderer(ren)
+        #     ren.SetViewport(xmins[i], ymins[i], xmaxs[i], ymaxs[i])
+        #     ren.SetActiveCamera(camera)
+        #     # Share the camera between viewports.
+        #     if i == 0:
+        #         camera = ren.GetActiveCamera()
+        #         camera.Azimuth(30)
+        #         camera.Elevation(30)
 
-            ren.ResetCamera()
-            ren.ResetCameraClippingRange()
+        #         color_transfer_function = vtk.vtkColorTransferFunction()
+        #         color_transfer_function.AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0)
+        #         color_transfer_function.AddRGBPoint(-16,
+        #                                             0.73, 0.25, 0.30, 0.49, .61)
+        #         color_transfer_function.AddRGBPoint(
+        #             641, .90, .82, .56, .5, 0.0)
+        #         color_transfer_function.AddRGBPoint(
+        #             3070, 1.0, 1.0, 1.0, .5, 0.0)
+        #         color_transfer_function.AddRGBPoint(
+        #             3071, 0.0, .333, 1.0, .5, 0.0)
+
+        #         opacity_transfer_function = vtk.vtkPiecewiseFunction()
+        #         opacity_transfer_function.AddPoint(-3024, 0, 0.5, 0.0)
+        #         opacity_transfer_function.AddPoint(-16, 0, .49, .61)
+        #         opacity_transfer_function.AddPoint(641, .72, .5, 0.0)
+        #         opacity_transfer_function.AddPoint(3071, .71, 0.5, 0.0)
+
+        #         volMapper = vtk.vtkGPUVolumeRayCastMapper()
+        #         volMapper.SetInputConnection(sources[0].GetOutputPort())
+
+        #         volume_property = vtk.vtkVolumeProperty()
+        #         volume_property.SetColor(color_transfer_function)
+        #         volume_property.SetScalarOpacity(opacity_transfer_function)
+        #         volume_property.SetInterpolationTypeToLinear()
+        #         volume_property.ShadeOn()
+        #         volume_property.SetAmbient(0.1)
+        #         volume_property.SetDiffuse(0.9)
+        #         volume_property.SetSpecular(0.2)
+        #         volume_property.SetSpecularPower(10.0)
+        #         volume_property.SetScalarOpacityUnitDistance(0.8919)
+
+        #         volume = vtk.vtkVolume()
+        #         volume.SetMapper(volMapper)
+        #         volume.SetProperty(volume_property)
+        #         volume.RotateX(-90)
+        #         ren.AddVolume(volume)
+        #         ren.AddActor(self.needle_actor)
+        #     else:
+        #         ren.SetActiveCamera(camera)
+
+        #     stlMapper = vtk.vtkPolyDataMapper()
+        #     stlMapper.SetInputConnection(sources[1].GetOutputPort())
+        #     stlMapper.SetScalarVisibility(0)
+
+        #     # Create an actor
+        #     actor = vtk.vtkActor()
+        #     actor.SetMapper(stlMapper)
+        #     actor.RotateX(-90)
+        #     ren.AddActor(actor)
+
+        #     ren.ResetCamera()
+        #     ren.ResetCameraClippingRange()
 
         self.frame.setLayout(self.vl)
         self.setCentralWidget(self.frame)
