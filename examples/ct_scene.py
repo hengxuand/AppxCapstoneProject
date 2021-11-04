@@ -1,19 +1,39 @@
 """Example showing a volume rendered CT scan and a polygonal liver"""
 
+
 import triad_openvr
 import os
 import vtk
-
+import time
+from vtkmodules.vtkFiltersSources import vtkSphereSource
 
 # Set up paths to data files
 curdir = os.path.dirname(__file__)
 CT_FILE = os.path.join(curdir, '../data/volume-105.nhdr')
 NEEDLE_FILE = os.path.join(curdir, '../data/handler.stl')
 
-REFRESH_RATE = 0.5
+REFRESH_RATE = 60
 
+connecting = False
 v = triad_openvr.triad_openvr()
-position = v.devices["controller_1"].get_pose_euler()
+# position = v.devices["controller_1"].get_pose_euler()
+# position[x, y, z, yaw, pitch, roll]
+
+while(True):
+    position = v.devices["controller_1"].get_pose_euler()
+
+    start = time.time()
+    message = ""
+    if not hasattr(position, '__iter__'):
+        message = "Waiting for controller."
+        print("\r" + message, end="")
+        sleep_time = 1/REFRESH_RATE-(time.time()-start)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+    else:
+        print("\r" + "Start to initial VTK window.", end="")
+        connecting = True
+        break
 
 
 # Initialize renderer, window, and the specific interaction (e.g., mouse mapping) style
@@ -32,10 +52,41 @@ window_interactor.Initialize()
 
 def callback_func(caller, timer_event):
     position = v.devices["controller_1"].get_pose_euler()
-    print(position)
-    actor.SetPosition(position[0] * -700, position[1]
-                      * 700 - 300, position[2]*-700)
+    controller_status = v.devices["controller_1"].get_controller_inputs()
+    txt = ""
+    if not hasattr(position, '__iter__'):
+        connecting = False
+        needle_actor.GetProperty().SetColor([1, 1, 1])
+        print("\r" + "Waiting", end="")
+    else:
+        connecting = True
+        for each in position:
+            txt += "%.4f" % each
+            txt += " "
+        print("\r" + txt, end="")
 
+        # since the pressure on the trigger is from 0 to 1,
+        # I decided compute the trigger strength use 1 - controller_status['trigger']
+        # change the color of the needle from (1, 1, 1) to (1, 1 * trigger strength, )
+        if(controller_status['trigger'] > 0.1):
+            print(controller_status)
+            trigger_strength = 1-controller_status['trigger']
+            needle_actor.GetProperty().SetColor(
+                [1, 1*trigger_strength, 1*trigger_strength])
+        else:
+            # when release the trigger, change the color of needle to white.
+            needle_actor.GetProperty().SetColor([1, 1, 1])
+
+        # Reset the needle position and orientation based on the 6dof data
+        needle_actor.SetPosition(position[0] * -700, position[1]
+                                 * 700 - 300, position[2]*-700)
+        needle_actor.SetOrientation(-position[5], -position[4], -position[3])
+
+    # check if the controller is within the basestation view
+    if(connecting):
+        sphere_actor.GetProperty().SetColor([0, 1, 0])
+    else:
+        sphere_actor.GetProperty().SetColor([1, 0, 0])
     render_window.Render()
 
 
@@ -105,7 +156,18 @@ renderer.AddVolume(volume)
 # actor.SetMapper(mapper)
 
 # ===============================================================
-
+# create connecting indicator using a sephere
+sphere_source = vtkSphereSource()
+sphere_source.SetCenter(0.0, 0.0, 0.0)
+sphere_source.SetRadius(20.0)
+sphere_source.SetPhiResolution(100)
+sphere_source.SetThetaResolution(100)
+mapper = vtk.vtkPolyDataMapper()
+mapper.SetInputConnection(sphere_source.GetOutputPort())
+sphere_actor = vtk.vtkActor()
+sphere_actor.SetMapper(mapper)
+sphere_actor.GetProperty().SetColor([0, 1, 0])
+renderer.AddActor(sphere_actor)
 
 # ========================STL=======================================
 reader = vtk.vtkSTLReader()
@@ -115,18 +177,17 @@ mapper = vtk.vtkPolyDataMapper()
 mapper.SetInputConnection(reader.GetOutputPort())
 mapper.SetScalarVisibility(0)
 
-actor = vtk.vtkActor()
-actor.SetMapper(mapper)
+needle_actor = vtk.vtkActor()
+needle_actor.SetMapper(mapper)
 
 # ===============================================================
 
-actor.SetPosition(0, 0, 0)
-actor.GetProperty().SetColor([1, 1, 1])
-actor.GetProperty().SetOpacity(1)
-actor.GetProperty().SetInterpolationToPhong()
-actor.GetProperty().SetRepresentationToSurface()
-actor.RotateY(30)
-renderer.AddActor(actor)
+needle_actor.SetPosition(0, 0, 0)
+needle_actor.GetProperty().SetColor([1, 1, 1])
+needle_actor.GetProperty().SetOpacity(1)
+needle_actor.GetProperty().SetInterpolationToPhong()
+needle_actor.GetProperty().SetRepresentationToSurface()
+renderer.AddActor(needle_actor)
 
 renderer.ResetCamera()
 renderer.ResetCameraClippingRange()

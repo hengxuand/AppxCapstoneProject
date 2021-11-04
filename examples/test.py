@@ -13,14 +13,18 @@ else:
     print("Invalid number of arguments")
     interval = False
 
-print(v.devices["controller_1"].get_pose_euler())
 if interval:
     while(True):
         start = time.time()
         txt = ""
-        for each in v.devices["controller_1"].get_pose_euler():
-            txt += "%.4f" % each
-            txt += " "
+        position = v.devices["controller_1"].get_pose_euler()
+
+        if hasattr(position, '__iter__'):
+            for each in position:
+                txt += "%.4f" % each
+                txt += " "
+        else:
+            txt = "Waiting for controller"
         print("\r" + txt, end="")
         sleep_time = interval-(time.time()-start)
         if sleep_time > 0:
