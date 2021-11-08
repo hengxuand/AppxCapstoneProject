@@ -2,6 +2,8 @@ import triad_openvr
 import vtk
 import time
 from PyQt5 import Qt
+from PyQt5 import QtGui
+from PyQt5 import QtCore
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkCommonColor import vtkNamedColors
 
@@ -15,6 +17,9 @@ class RenderWindow(Qt.QMainWindow):
         self.REFRESH_RATE = 60
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
+
+        # logo
+        self.setWindowIcon(QtGui.QIcon('..\data\logo1.png'))
 
         # while(True):
         #     position = self.vivecontrol.devices["controller_1"].get_pose_euler(
@@ -120,6 +125,35 @@ class RenderWindow(Qt.QMainWindow):
         main_ren.AddVolume(volume)
         main_ren.AddActor(self.needle_actor)
         main_ren.AddActor(tumor_actor)
+
+        # logo
+
+        # reader = vtk.vtkPNGReader()
+        # reader.SetFileName("..\data\logo.png")
+        # reader.Update()
+        ##imageActor = vtkImageActor()
+        # imageActor = vtk.vtkLogoRepresentation()
+        # imageActor.SetImage(reader.GetOutput())
+        # print("Here")
+        # imageActor.ProportionalResizeOn()
+        # imageActor.SetPosition(0.882, 1.0 )
+        # print("after position")
+        # imageActor.SetInputData(reader.GetOutput())
+        # main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
+        # main_ren.AddViewProp(imageActor)
+
+        # text
+        txt = vtk.vtkTextActor()
+        txt.SetInput('Patient name / info')
+        txtprop = txt.GetTextProperty()
+        txtprop.SetFontFamilyToArial()
+        txtprop.BoldOn()
+        txtprop.SetFontSize(20)
+        txtprop.ShadowOn()
+        txtprop.SetShadowOffset(4, 4)
+        txtprop.SetColor(vtkNamedColors().GetColor3d('Cornsilk'))
+        txt.SetDisplayPosition(10, 700)
+        main_ren.AddActor(txt)
 
         main_ren.ResetCamera()
         main_ren.ResetCameraClippingRange()
