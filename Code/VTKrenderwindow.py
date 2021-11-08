@@ -16,26 +16,26 @@ class RenderWindow(Qt.QMainWindow):
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
 
-        while(True):
-            position = self.vivecontrol.devices["controller_1"].get_pose_euler(
-            )
+        # while(True):
+        #     position = self.vivecontrol.devices["controller_1"].get_pose_euler(
+        #     )
 
-            start = time.time()
-            message = ""
-            if not hasattr(position, '__iter__'):
-                message = "Waiting for controller."
-                print("\r" + message, end="")
-                sleep_time = 1/self.REFRESH_RATE-(time.time()-start)
-                if sleep_time > 0:
-                    time.sleep(sleep_time)
-            else:
-                print("\r" + "Start to initial VTK window.", end="")
-                break
+        #     start = time.time()
+        #     message = ""
+        #     if not hasattr(position, '__iter__'):
+        #         message = "Waiting for controller."
+        #         print("\r" + message, end="")
+        #         sleep_time = 1/self.REFRESH_RATE-(time.time()-start)
+        #         if sleep_time > 0:
+        #             time.sleep(sleep_time)
+        #     else:
+        #         print("\r" + "Start to initial VTK window.", end="")
+        #         break
 
         print("VTK Render Window Start")
         # setup Qt frame
         self.frame = Qt.QFrame()
-        self.frame.setMinimumSize(1024, 800)
+        self.frame.setMinimumSize(1090, 800)
         self.vl = Qt.QVBoxLayout()
         self.vtkWidget = QVTKRenderWindowInteractor(self.frame)
         self.vl.addWidget(self.vtkWidget)
@@ -78,9 +78,9 @@ class RenderWindow(Qt.QMainWindow):
         self.rw.AddRenderer(main_ren)
         main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 
-        camera = main_ren.GetActiveCamera()
-        camera.Azimuth(30)
-        camera.Elevation(30)
+        self.camera = main_ren.GetActiveCamera()
+        # self.camera.Azimuth(30)
+        # self.camera.Elevation(30)
 
         color_transfer_function = vtk.vtkColorTransferFunction()
         color_transfer_function.AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0)
@@ -129,81 +129,18 @@ class RenderWindow(Qt.QMainWindow):
         side_ren1 = vtk.vtkRenderer()
         self.rw.AddRenderer(side_ren1)
         side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
-        side_ren1.SetActiveCamera(camera)
+        side_ren1.SetActiveCamera(self.camera)
         side_ren1.AddActor(tumor_actor)
 
         side_ren1.ResetCamera()
         side_ren1.ResetCameraClippingRange()
 
-        # for i in range(2):
-        #     print("render screen " + str(i))
-        #     ren = vtk.vtkRenderer()
-        #     self.rw.AddRenderer(ren)
-        #     ren.SetViewport(xmins[i], ymins[i], xmaxs[i], ymaxs[i])
-        #     ren.SetActiveCamera(camera)
-        #     # Share the camera between viewports.
-        #     if i == 0:
-        #         camera = ren.GetActiveCamera()
-        #         camera.Azimuth(30)
-        #         camera.Elevation(30)
-
-        #         color_transfer_function = vtk.vtkColorTransferFunction()
-        #         color_transfer_function.AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0)
-        #         color_transfer_function.AddRGBPoint(-16,
-        #                                             0.73, 0.25, 0.30, 0.49, .61)
-        #         color_transfer_function.AddRGBPoint(
-        #             641, .90, .82, .56, .5, 0.0)
-        #         color_transfer_function.AddRGBPoint(
-        #             3070, 1.0, 1.0, 1.0, .5, 0.0)
-        #         color_transfer_function.AddRGBPoint(
-        #             3071, 0.0, .333, 1.0, .5, 0.0)
-
-        #         opacity_transfer_function = vtk.vtkPiecewiseFunction()
-        #         opacity_transfer_function.AddPoint(-3024, 0, 0.5, 0.0)
-        #         opacity_transfer_function.AddPoint(-16, 0, .49, .61)
-        #         opacity_transfer_function.AddPoint(641, .72, .5, 0.0)
-        #         opacity_transfer_function.AddPoint(3071, .71, 0.5, 0.0)
-
-        #         volMapper = vtk.vtkGPUVolumeRayCastMapper()
-        #         volMapper.SetInputConnection(sources[0].GetOutputPort())
-
-        #         volume_property = vtk.vtkVolumeProperty()
-        #         volume_property.SetColor(color_transfer_function)
-        #         volume_property.SetScalarOpacity(opacity_transfer_function)
-        #         volume_property.SetInterpolationTypeToLinear()
-        #         volume_property.ShadeOn()
-        #         volume_property.SetAmbient(0.1)
-        #         volume_property.SetDiffuse(0.9)
-        #         volume_property.SetSpecular(0.2)
-        #         volume_property.SetSpecularPower(10.0)
-        #         volume_property.SetScalarOpacityUnitDistance(0.8919)
-
-        #         volume = vtk.vtkVolume()
-        #         volume.SetMapper(volMapper)
-        #         volume.SetProperty(volume_property)
-        #         volume.RotateX(-90)
-        #         ren.AddVolume(volume)
-        #         ren.AddActor(self.needle_actor)
-        #     else:
-        #         ren.SetActiveCamera(camera)
-
-        #     stlMapper = vtk.vtkPolyDataMapper()
-        #     stlMapper.SetInputConnection(sources[1].GetOutputPort())
-        #     stlMapper.SetScalarVisibility(0)
-
-        #     # Create an actor
-        #     actor = vtk.vtkActor()
-        #     actor.SetMapper(stlMapper)
-        #     actor.RotateX(-90)
-        #     ren.AddActor(actor)
-
-        #     ren.ResetCamera()
-        #     ren.ResetCameraClippingRange()
-
         self.frame.setLayout(self.vl)
         self.setCentralWidget(self.frame)
-
-        self.show()
+        cam_pos_x, cam_pos_y, cam_pos_z = self.camera.GetPosition()
+        # self.camera.SetFocalPoint(0, -500, 200)
+        self.camera.SetPosition(cam_pos_x, cam_pos_y, 1700)
+        self.showMaximized()
         self.rw.Render()
         self.iren.Start()
 
@@ -226,6 +163,12 @@ class RenderWindow(Qt.QMainWindow):
 
         return sources
 
+    def return_sign(self, x):
+        if x > 0:
+            return 1
+        elif x < 0:
+            return -1
+
     def callback_func(self, caller, timer_event):
         # fetch the position data
         position = self.vivecontrol.devices["controller_1"].get_pose_euler()
@@ -243,6 +186,21 @@ class RenderWindow(Qt.QMainWindow):
                 txt += " "
             print("\r" + txt, end="")
 
+            # Rotation about axises on the trackpad pression
+            track_pad_border = 0.1
+            if(controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == True):
+                if abs(controller_status['trackpad_x']) > track_pad_border and abs(controller_status['trackpad_y']) > track_pad_border:
+                    self.camera.Azimuth(
+                        3 * self.return_sign(controller_status['trackpad_x']))
+                    self.camera.Elevation(
+                        3 * self.return_sign(controller_status['trackpad_y']))
+                elif abs(controller_status['trackpad_x']) < track_pad_border and abs(controller_status['trackpad_y']) > track_pad_border:
+                    self.camera.Elevation(
+                        3 * self.return_sign(controller_status['trackpad_y']))
+                elif abs(controller_status['trackpad_x']) > track_pad_border and abs(controller_status['trackpad_y']) < track_pad_border:
+                    self.camera.Azimuth(
+                        3 * self.return_sign(controller_status['trackpad_x']))
+
             # since the pressure on the trigger is from 0 to 1,
             # I decided compute the trigger strength use 1 - controller_status['trigger']
             # change the color of the needle from (1, 1, 1) to (1, 1 * trigger strength, )
@@ -259,7 +217,7 @@ class RenderWindow(Qt.QMainWindow):
                 self.needle_actor.SetOrientation(
                     -position[5], -position[4], -position[3])
 
-            self.rw.Render()
+        self.rw.Render()
 
     def needle(self):
         reader = vtk.vtkSTLReader()
