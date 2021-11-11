@@ -50,7 +50,8 @@ class Window(QMainWindow):
     def window2(self, ct_file, stl_file):
         print("window2" + ct_file + stl_file)
         self.w = VTKrenderwindow.RenderWindow(ct_file, stl_file)
-        self.w.showMaximized()
+        # self.w.showMaximized()
+        self.w.showFullScreen()
         # self.hide()
 
     # def window2_button_handler(self):
