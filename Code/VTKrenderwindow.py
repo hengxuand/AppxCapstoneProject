@@ -15,8 +15,10 @@ class RenderWindow(Qt.QMainWindow):
         self.setWindowTitle("VTK Render Window")
 
         self.REFRESH_RATE = 60
+
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
+        self.zoom_var = 0.0
 
         # logo
         self.setWindowIcon(QtGui.QIcon('..\data\logo1.png'))
@@ -139,11 +141,11 @@ class RenderWindow(Qt.QMainWindow):
 
         return sources
 
-    def return_sign(self, x):
+    def reverse_sign(self, x):
         if x > 0:
-            return 1
-        elif x < 0:
             return -1
+        elif x < 0:
+            return 1
 
     def callback_func(self, caller, timer_event):
         # fetch the position data
@@ -163,22 +165,40 @@ class RenderWindow(Qt.QMainWindow):
             print("\r" + txt, end="")
 
             # Rotation about axises on the trackpad pression
-            track_pad_border = 0.1
-            if controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == True:
-                if abs(controller_status['trackpad_x']) > track_pad_border and abs(
-                        controller_status['trackpad_y']) > track_pad_border:
-                    self.camera.Azimuth(
-                        3 * self.return_sign(controller_status['trackpad_x']))
-                    self.camera.Elevation(
-                        3 * self.return_sign(controller_status['trackpad_y']))
-                elif abs(controller_status['trackpad_x']) < track_pad_border < abs(
-                        controller_status['trackpad_y']):
-                    self.camera.Elevation(
-                        3 * self.return_sign(controller_status['trackpad_y']))
-                elif abs(controller_status['trackpad_x']) > track_pad_border > abs(
-                        controller_status['trackpad_y']):
-                    self.camera.Azimuth(
-                        3 * self.return_sign(controller_status['trackpad_x']))
+            track_pad_border = 0.3
+            # zoom in and out need touch but not press the trackpad
+            if controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == False and controller_status["grip_button"]:
+                distance = self.camera.GetDistance()
+                print("distance : " + str(distance))
+                # self.zoom_var[0] = self.zoom_var[1]
+                # self.zoom_var[1] = controller_status['trackpad_y']
+                if controller_status['trackpad_y'] > self.zoom_var and distance - 500 > 30:
+                    print("zoom in")
+                    self.camera.Dolly(1.02)
+                elif controller_status['trackpad_y'] < self.zoom_var and distance < 2000:
+                    print("zoom out")
+                    self.camera.Dolly(0.98)
+            # move camera need touch and press the trackpad
+            elif controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == True:
+                self.camera.Azimuth(
+                    3 * self.reverse_sign(controller_status['trackpad_x']))
+                self.camera.Elevation(
+                    3 * self.reverse_sign(controller_status['trackpad_y']))
+                self.camera.OrthogonalizeViewUp()
+                # if abs(controller_status['trackpad_x']) > track_pad_border and abs(
+                #         controller_status['trackpad_y']) > track_pad_border:
+                #     self.camera.Azimuth(
+                #         3 * self.return_sign(controller_status['trackpad_x']))
+                #     self.camera.Elevation(
+                #         3 * self.return_sign(controller_status['trackpad_y']))
+                # elif abs(controller_status['trackpad_x']) < track_pad_border and abs(
+                #         controller_status['trackpad_y']) > track_pad_border:
+                #     self.camera.Elevation(
+                #         3 * self.return_sign(controller_status['trackpad_y']))
+                # elif abs(controller_status['trackpad_x']) > track_pad_border and abs(
+                #         controller_status['trackpad_y']) < track_pad_border:
+                #     self.camera.Azimuth(
+                #         3 * self.return_sign(controller_status['trackpad_x']))
 
             # since the pressure on the trigger is from 0 to 1,
             # I decided compute the trigger strength use 1 - controller_status['trigger']
@@ -306,7 +326,8 @@ class RenderWindow(Qt.QMainWindow):
 
         # Calculate the center of the volume
         ctsource.Update()
-        (xMin, xMax, yMin, yMax, zMin, zMax) = ctsource.GetExecutive().GetWholeExtent(ctsource.GetOutputInformation(0))
+        (xMin, xMax, yMin, yMax, zMin, zMax) = ctsource.GetExecutive(
+        ).GetWholeExtent(ctsource.GetOutputInformation(0))
         (xSpacing, ySpacing, zSpacing) = ctsource.GetOutput().GetSpacing()
         (x0, y0, z0) = ctsource.GetOutput().GetOrigin()
 
@@ -363,4 +384,3 @@ class RenderWindow(Qt.QMainWindow):
         actor.GetMapper().SetInputConnection(color.GetOutputPort())
 
         return actor, reslice
-
