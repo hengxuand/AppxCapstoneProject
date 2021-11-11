@@ -18,7 +18,7 @@ class Window(QMainWindow):
         self.ct_path = os.path.join(self.curdir, '../data/volume-105.nhdr')
         self.stl_path = os.path.join(self.curdir, '../data/Liver.stl')
         self.title = "VTK Render Window"
-
+        self.setStyleSheet("QMainWindow {background: 'yellow';}")
         # self.BrowseButton_ct = QPushButton("Browse CT File", self)
         # self.BrowseButton_ct.move(200, 175)
         # self.BrowseButton_ct.setToolTip(
@@ -49,6 +49,7 @@ class Window(QMainWindow):
 
     def window2(self, ct_file, stl_file):
         print("window2" + ct_file + stl_file)
+
         self.w = VTKrenderwindow.RenderWindow(ct_file, stl_file)
         # self.w.showMaximized()
         self.w.showFullScreen()

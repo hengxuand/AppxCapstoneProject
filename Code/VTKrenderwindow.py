@@ -26,6 +26,7 @@ class RenderWindow(Qt.QMainWindow):
         print("VTK Render Window Start")
         # setup Qt frame
         self.frame = Qt.QFrame()
+        self.frame.setStyleSheet("background-color: black")
         self.vl = Qt.QVBoxLayout()
         self.vtkWidget = QVTKRenderWindowInteractor(self.frame)
         self.vl.addWidget(self.vtkWidget)
