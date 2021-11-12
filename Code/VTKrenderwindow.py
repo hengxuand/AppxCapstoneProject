@@ -15,7 +15,8 @@ class RenderWindow(Qt.QMainWindow):
         self.setWindowTitle("VTK Render Window")
 
         self.REFRESH_RATE = 60
-
+        self.volume_visible = True
+        self.volume_pressed = False
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
         self.zoom_var = 0.0
@@ -69,11 +70,11 @@ class RenderWindow(Qt.QMainWindow):
         volMapper = vtk.vtkGPUVolumeRayCastMapper()
         volMapper.SetInputConnection(sources[0].GetOutputPort())
 
-        volume = vtk.vtkVolume()
-        volume.SetMapper(volMapper)
-        volume.SetProperty(self.vtkVolume())
-        volume.RotateX(-90)
-        main_ren.AddVolume(volume)
+        self.volume = vtk.vtkVolume()
+        self.volume.SetMapper(volMapper)
+        self.volume.SetProperty(self.vtkVolume())
+        self.volume.RotateX(-90)
+        main_ren.AddVolume(self.volume)
         main_ren.AddActor(self.needle_actor)
         main_ren.AddActor(tumor_actor)
 
@@ -164,6 +165,20 @@ class RenderWindow(Qt.QMainWindow):
                 txt += "%.4f" % each
                 txt += " "
             print("\r" + txt, end="")
+
+            # toggle objects
+            if controller_status['menu_button'] == True and self.volume_visible == True and self.volume_pressed == False:
+                self.volume_pressed = True
+            elif controller_status['menu_button'] == False and self.volume_visible == True and self.volume_pressed == True:
+                self.volume.VisibilityOff()
+                self.volume_visible = False
+                self.volume_pressed = False
+            elif controller_status['menu_button'] == True and self.volume_visible == False and self.volume_pressed == False:
+                self.volume_pressed = True
+            elif controller_status['menu_button'] == False and self.volume_visible == False and self.volume_pressed == True:
+                self.volume.VisibilityOn()
+                self.volume_visible = True
+                self.volume_pressed = False
 
             # Rotation about axises on the trackpad pression
             track_pad_border = 0.3
