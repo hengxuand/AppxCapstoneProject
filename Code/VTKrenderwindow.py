@@ -20,6 +20,7 @@ class RenderWindow(Qt.QMainWindow):
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
         self.zoom_var = 0.0
+        self.tumor_hp = 100
 
         # logo
         self.setWindowIcon(QtGui.QIcon('..\data\logo1.png'))
@@ -54,9 +55,11 @@ class RenderWindow(Qt.QMainWindow):
         stlMapper = vtk.vtkPolyDataMapper()
         stlMapper.SetInputConnection(sources[1].GetOutputPort())
         stlMapper.SetScalarVisibility(0)
-        tumor_actor = vtk.vtkActor()
-        tumor_actor.SetMapper(stlMapper)
-        tumor_actor.RotateX(-90)
+        self.tumor_actor = vtk.vtkActor()
+        self.tumor_actor.SetMapper(stlMapper)
+        self.tumor_actor.RotateX(-90)
+        self.tumor_actor.GetProperty().SetColor(1, 0.6, 0.2)
+        self.tumor_actor.GetProperty().SetOpacity(0.8)
 
         # render main screen
         print("render main screen")
@@ -74,12 +77,36 @@ class RenderWindow(Qt.QMainWindow):
         self.volume.SetMapper(volMapper)
         self.volume.SetProperty(self.vtkVolume())
         self.volume.RotateX(-90)
+        self.volume.GetProperty().ShadeOn()
+
+        # # create a plane to cut,here it cuts in the XZ direction (xz normal=(1,0,0);XY =(0,0,1),YZ =(0,1,0)
+        # plane = vtk.vtkPlane()
+        # plane.SetOrigin(10, 0, 0)
+        # plane.SetNormal(1, 0, 0)
+
+        # # create cutter
+        # cutter = vtk.vtkCutter()
+        # cutter.SetCutFunction(plane)
+        # cutter.SetInputConnection(sources[1].GetOutputPort())
+        # cutter.Update()
+        # cutterMapper = vtk.vtkPolyDataMapper()
+        # cutterMapper.SetInputConnection(cutter.GetOutputPort())
+
+        # # create plane actor
+        # planeActor = vtk.vtkActor()
+        # planeActor.GetProperty().SetColor(1, 1, 1)
+        # planeActor.GetProperty().SetLineWidth(2)
+        # planeActor.GetProperty().SetAmbient(1.0)
+        # planeActor.GetProperty().SetDiffuse(0.0)
+        # planeActor.SetMapper(cutterMapper)
+
         main_ren.AddVolume(self.volume)
         main_ren.AddActor(self.needle_actor)
-        main_ren.AddActor(tumor_actor)
+        main_ren.AddActor(self.tumor_actor)
+        # main_ren.AddActor(planeActor)
+        # main_ren.AddActor(aTetActor)
 
         # logo
-
         # reader = vtk.vtkPNGReader()
         # reader.SetFileName("..\data\logo.png")
         # reader.Update()
@@ -105,7 +132,9 @@ class RenderWindow(Qt.QMainWindow):
         self.rw.AddRenderer(side_ren1)
         # side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
         side_ren1.SetActiveCamera(self.camera)
-        side_ren1.AddActor(tumor_actor)
+        side_ren1.AddActor(self.tumor_actor)
+        # self.reslicer = vtk.vtkImageReslice()
+        # self.reslicer.SetOutPutDimensionality(2)
 
         side_ren1.ResetCamera()
         side_ren1.ResetCameraClippingRange()
@@ -171,28 +200,25 @@ class RenderWindow(Qt.QMainWindow):
                 self.volume_pressed = True
             elif controller_status['menu_button'] == False and self.volume_visible == True and self.volume_pressed == True:
                 self.volume.VisibilityOff()
+                self.tumor_actor.GetProperty().SetRepresentationToWireframe()
                 self.volume_visible = False
                 self.volume_pressed = False
             elif controller_status['menu_button'] == True and self.volume_visible == False and self.volume_pressed == False:
                 self.volume_pressed = True
             elif controller_status['menu_button'] == False and self.volume_visible == False and self.volume_pressed == True:
                 self.volume.VisibilityOn()
+                self.tumor_actor.GetProperty().SetRepresentationToSurface()
                 self.volume_visible = True
                 self.volume_pressed = False
 
             # Rotation about axises on the trackpad pression
-            track_pad_border = 0.3
+            # track_pad_border = 0.3
             # zoom in and out need touch but not press the trackpad
             if controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == False and controller_status["grip_button"]:
                 distance = self.camera.GetDistance()
-                print("distance : " + str(distance))
-                # self.zoom_var[0] = self.zoom_var[1]
-                # self.zoom_var[1] = controller_status['trackpad_y']
                 if controller_status['trackpad_y'] > self.zoom_var and distance - 500 > 30:
-                    print("zoom in")
                     self.camera.Dolly(1.02)
                 elif controller_status['trackpad_y'] < self.zoom_var and distance < 2000:
-                    print("zoom out")
                     self.camera.Dolly(0.98)
             # move camera need touch and press the trackpad
             elif controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == True:
@@ -201,20 +227,6 @@ class RenderWindow(Qt.QMainWindow):
                 self.camera.Elevation(
                     3 * self.reverse_sign(controller_status['trackpad_y']))
                 self.camera.OrthogonalizeViewUp()
-                # if abs(controller_status['trackpad_x']) > track_pad_border and abs(
-                #         controller_status['trackpad_y']) > track_pad_border:
-                #     self.camera.Azimuth(
-                #         3 * self.return_sign(controller_status['trackpad_x']))
-                #     self.camera.Elevation(
-                #         3 * self.return_sign(controller_status['trackpad_y']))
-                # elif abs(controller_status['trackpad_x']) < track_pad_border and abs(
-                #         controller_status['trackpad_y']) > track_pad_border:
-                #     self.camera.Elevation(
-                #         3 * self.return_sign(controller_status['trackpad_y']))
-                # elif abs(controller_status['trackpad_x']) > track_pad_border and abs(
-                #         controller_status['trackpad_y']) < track_pad_border:
-                #     self.camera.Azimuth(
-                #         3 * self.return_sign(controller_status['trackpad_x']))
 
             # since the pressure on the trigger is from 0 to 1,
             # I decided compute the trigger strength use 1 - controller_status['trigger']
