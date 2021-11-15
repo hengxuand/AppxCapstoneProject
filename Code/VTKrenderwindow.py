@@ -6,7 +6,10 @@ from PyQt5 import QtGui
 from PyQt5 import QtCore
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkCommonColor import vtkNamedColors
-
+from datetime import date
+from vtkmodules.vtkRenderingCore import (
+    vtkActor,
+    vtkImageActor)
 
 class RenderWindow(Qt.QMainWindow):
 
@@ -23,7 +26,7 @@ class RenderWindow(Qt.QMainWindow):
         self.tumor_hp = 100
 
         # logo
-        self.setWindowIcon(QtGui.QIcon('..\data\logo1.png'))
+        self.setWindowIcon(QtGui.QIcon('..\data\logo.png'))
 
         print("VTK Render Window Start")
         # setup Qt frame
@@ -107,21 +110,25 @@ class RenderWindow(Qt.QMainWindow):
         # main_ren.AddActor(aTetActor)
 
         # logo
-        # reader = vtk.vtkPNGReader()
-        # reader.SetFileName("..\data\logo.png")
-        # reader.Update()
-        ##imageActor = vtkImageActor()
-        # imageActor = vtk.vtkLogoRepresentation()
-        # imageActor.SetImage(reader.GetOutput())
-        # print("Here")
-        # imageActor.ProportionalResizeOn()
-        # imageActor.SetPosition(0.882, 1.0 )
-        # print("after position")
-        # imageActor.SetInputData(reader.GetOutput())
-        # main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
-        # main_ren.AddViewProp(imageActor)
+        reader = vtk.vtkPNGReader()
+        reader.SetFileName("..\data\logo.png")
+        reader.Update()
+        logo = vtk.vtkLogoRepresentation()
+        logo.SetImage(reader.GetOutput())
+       
+        # logo.ProportionalResizeOn()
+        # logo.SetPosition(20, 20)
+        # logo.SetPosition2(10,10)
+        # logoWidget = vtk.vtkLogoWidget()
+        
+        #imageActor.SetInputData(reader.GetOutput())
+        #main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 
-        main_ren.AddActor(self.txtActor(1, 1, 15, 'Patient name: Hengxuan'))
+
+        main_ren.AddActor(self.txtActor(2, 42, 15, 'Patient name: Alex Smith'))
+        main_ren.AddActor(self.txtActor(2, 22, 15, 'Age: 40 - F'))
+        todaystr = date.today().strftime("%m-%d-%Y")
+        main_ren.AddActor(self.txtActor(2, 2, 15, todaystr))
 
         main_ren.ResetCamera()
         main_ren.ResetCameraClippingRange()
@@ -129,12 +136,17 @@ class RenderWindow(Qt.QMainWindow):
         # render side window
         print("render side screen 1")
         side_ren1 = self.vtkRender(1)
+        side_ren1.AddViewProp(logo)
+        logo.SetRenderer(side_ren1)
         self.rw.AddRenderer(side_ren1)
         # side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
         side_ren1.SetActiveCamera(self.camera)
         side_ren1.AddActor(self.tumor_actor)
         # self.reslicer = vtk.vtkImageReslice()
         # self.reslicer.SetOutPutDimensionality(2)
+
+
+        
 
         side_ren1.ResetCamera()
         side_ren1.ResetCameraClippingRange()
@@ -268,7 +280,7 @@ class RenderWindow(Qt.QMainWindow):
 
     def needle(self):
         reader = vtk.vtkSTLReader()
-        reader.SetFileName("./data/handler.stl")
+        reader.SetFileName("../data/handler.stl")
 
         needle_mapper = vtk.vtkPolyDataMapper()
         needle_mapper.SetInputConnection(reader.GetOutputPort())
@@ -339,7 +351,7 @@ class RenderWindow(Qt.QMainWindow):
         txtprop.SetFontSize(Fontsize)
         txtprop.ShadowOn()
         txtprop.SetShadowOffset(4, 4)
-        txtprop.SetColor(vtkNamedColors().GetColor3d('Cornsilk'))
+        txtprop.SetColor(vtkNamedColors().GetColor3d('White'))
         txt.SetPosition(Xpos, Ypos)
 
         return txt
