@@ -11,6 +11,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkImageActor)
 
+
 class RenderWindow(Qt.QMainWindow):
 
     def __init__(self, ct_file, stl_file, parent=None, ):
@@ -26,7 +27,7 @@ class RenderWindow(Qt.QMainWindow):
         self.liver_hp = 100
 
         # logo
-        self.setWindowIcon(QtGui.QIcon('..\data\logo.png'))
+        self.setWindowIcon(QtGui.QIcon('./data/logo.png'))
 
         print("VTK Render Window Start")
         # setup Qt frame
@@ -46,8 +47,7 @@ class RenderWindow(Qt.QMainWindow):
         self.iren.SetInteractorStyle(interaction_style)
         self.iren.Initialize()
 
-        # self.needle_actor = self.needle()
-
+        # register callback
         self.iren.CreateRepeatingTimer(int(1 / self.REFRESH_RATE))
         self.iren.AddObserver("TimerEvent", self.callback_func)
         self.iren.SetRenderWindow(self.rw)
@@ -130,25 +130,24 @@ class RenderWindow(Qt.QMainWindow):
 
         # logo
         reader = vtk.vtkPNGReader()
-        reader.SetFileName("..\data\logo.png")
+        reader.SetFileName("./data/logo.png")
         reader.Update()
         logo = vtk.vtkLogoRepresentation()
         logo.SetImage(reader.GetOutput())
-       
+
         # logo.ProportionalResizeOn()
         # logo.SetPosition(20, 20)
         # logo.SetPosition2(10,10)
         # logoWidget = vtk.vtkLogoWidget()
-        
-        #imageActor.SetInputData(reader.GetOutput())
+
+        # imageActor.SetInputData(reader.GetOutput())
         #main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 
-
-        main_ren.AddActor(self.txtActor(2, 42, 15, 'Patient name: Alex Smith'))
-        main_ren.AddActor(self.txtActor(2, 22, 15, 'Age: 40 - F'))
+        self.main_ren.AddActor(self.txtActor(
+            2, 42, 15, 'Patient name: Alex Smith'))
+        self.main_ren.AddActor(self.txtActor(2, 22, 15, 'Age: 40 - F'))
         todaystr = date.today().strftime("%m-%d-%Y")
-        main_ren.AddActor(self.txtActor(2, 2, 15, todaystr))
-
+        self.main_ren.AddActor(self.txtActor(2, 2, 15, todaystr))
         self.main_ren.AddActor(self.txtActor(
             1, 1, 15, 'Patient name: Hengxuan'))
 
@@ -161,9 +160,6 @@ class RenderWindow(Qt.QMainWindow):
         # side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
         side_ren1.SetActiveCamera(self.camera)
         side_ren1.AddActor(self.liver_actor)
-
-
-        
 
         side_ren1.ResetCamera()
         side_ren1.ResetCameraClippingRange()
