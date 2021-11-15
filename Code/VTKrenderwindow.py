@@ -20,7 +20,7 @@ class RenderWindow(Qt.QMainWindow):
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
         self.zoom_var = 0.0
-        self.tumor_hp = 100
+        self.liver_hp = 100
 
         # logo
         self.setWindowIcon(QtGui.QIcon('..\data\logo1.png'))
@@ -43,7 +43,7 @@ class RenderWindow(Qt.QMainWindow):
         self.iren.SetInteractorStyle(interaction_style)
         self.iren.Initialize()
 
-        self.needle_actor = self.needle()
+        # self.needle_actor = self.needle()
 
         self.iren.CreateRepeatingTimer(int(1 / self.REFRESH_RATE))
         self.iren.AddObserver("TimerEvent", self.callback_func)
@@ -51,24 +51,21 @@ class RenderWindow(Qt.QMainWindow):
 
         # get sources
         sources = self.get_sources(ct_file, stl_file)
-        # create tumor actor to be added later on
+        # create liver actor to be added later on
         stlMapper = vtk.vtkPolyDataMapper()
         stlMapper.SetInputConnection(sources[1].GetOutputPort())
         stlMapper.SetScalarVisibility(0)
-        self.tumor_actor = vtk.vtkActor()
-        self.tumor_actor.SetMapper(stlMapper)
-        self.tumor_actor.RotateX(-90)
-        self.tumor_actor.GetProperty().SetColor(1, 0.6, 0.2)
-        self.tumor_actor.GetProperty().SetOpacity(0.8)
+        self.liver_actor = vtk.vtkActor()
+        self.liver_actor.SetMapper(stlMapper)
+        self.liver_actor.RotateX(-90)
+        self.liver_actor.GetProperty().SetColor(1, 1, 1)
+        self.liver_actor.GetProperty().SetOpacity(0.6)
 
         # render main screen
         print("render main screen")
-        main_ren = self.vtkRender(0)
-        self.rw.AddRenderer(main_ren)
-
-        self.camera = main_ren.GetActiveCamera()
-        # self.camera.Azimuth(30)
-        # self.camera.Elevation(30)
+        self.main_ren = self.vtkRender(0)
+        self.rw.AddRenderer(self.main_ren)
+        self.camera = self.main_ren.GetActiveCamera()
 
         volMapper = vtk.vtkGPUVolumeRayCastMapper()
         volMapper.SetInputConnection(sources[0].GetOutputPort())
@@ -77,34 +74,56 @@ class RenderWindow(Qt.QMainWindow):
         self.volume.SetMapper(volMapper)
         self.volume.SetProperty(self.vtkVolume())
         self.volume.RotateX(-90)
-        self.volume.GetProperty().ShadeOn()
 
-        # # create a plane to cut,here it cuts in the XZ direction (xz normal=(1,0,0);XY =(0,0,1),YZ =(0,1,0)
-        # plane = vtk.vtkPlane()
-        # plane.SetOrigin(10, 0, 0)
-        # plane.SetNormal(1, 0, 0)
+        # read needle and tumor
+        # load needle and create actor
+        needle_reader = vtk.vtkSTLReader()
+        needle_reader.SetFileName("./data/needle.stl")
+        needle_mapper = vtk.vtkPolyDataMapper()
+        needle_mapper.SetInputConnection(needle_reader.GetOutputPort())
+        needle_mapper.SetScalarVisibility(0)
+        self.needle_actor = vtk.vtkActor()
+        self.needle_actor.SetMapper(needle_mapper)
+        self.needle_actor.SetScale(5)
+        self.needle_actor.GetProperty().SetColor([1, 1, 1])
+        self.needle_actor.GetProperty().SetOpacity(1)
+        self.needle_actor.GetProperty().SetInterpolationToPhong()
+        self.needle_actor.GetProperty().SetRepresentationToSurface()
 
-        # # create cutter
-        # cutter = vtk.vtkCutter()
-        # cutter.SetCutFunction(plane)
-        # cutter.SetInputConnection(sources[1].GetOutputPort())
-        # cutter.Update()
-        # cutterMapper = vtk.vtkPolyDataMapper()
-        # cutterMapper.SetInputConnection(cutter.GetOutputPort())
+        # load tumor
+        tumor_reader = vtk.vtkSTLReader()
+        tumor_reader.SetFileName("./data/mass.stl")
+        tumor_mapper = vtk.vtkPolyDataMapper()
+        tumor_mapper.SetInputConnection(tumor_reader.GetOutputPort())
+        tumor_mapper.SetScalarVisibility(0)
+        self.tumor_actor = vtk.vtkActor()
+        self.tumor_actor.SetMapper(tumor_mapper)
+        self.tumor_actor.SetPosition(0, 0, 0)
+        self.tumor_actor.SetPosition([-200, -390, 200])
+        self.tumor_actor.GetProperty().SetColor([1, 0.6, 0.2])
+        self.tumor_actor.GetProperty().SetOpacity(1)
+        # self.tumor_actor.GetProperty().SetInterpolationToPhong()
+        self.tumor_actor.GetProperty().SetRepresentationToSurface()
 
-        # # create plane actor
-        # planeActor = vtk.vtkActor()
-        # planeActor.GetProperty().SetColor(1, 1, 1)
-        # planeActor.GetProperty().SetLineWidth(2)
-        # planeActor.GetProperty().SetAmbient(1.0)
-        # planeActor.GetProperty().SetDiffuse(0.0)
-        # planeActor.SetMapper(cutterMapper)
+        # actors collision detection
+        # self.matrix1 = vtk.vtkMatrix4x4()
+        # self.transform0 = vtk.vtkTransform()
+        # self.collide = vtk.vtkCollisionDetectionFilter()
+        # self.collide.SetInputConnection(0, sources[1].GetOutputPort())
+        # self.collide.SetTransform(0, self.transform0)
+        # self.collide.SetInputConnection(1, needle_reader.GetOutputPort())
+        # self.collide.SetMatrix(1, self.matrix1)
+        # self.collide.SetBoxTolerance(0.0)
+        # self.collide.SetCellTolerance(0.0)
+        # self.collide.SetNumberOfCellsPerNode(2)
+        # self.collide.SetCollisionModeToAllContacts()
+        # self.collide.GenerateScalarsOn()
+        # print("self.collide.GetNumberOfContacts()")
 
-        main_ren.AddVolume(self.volume)
-        main_ren.AddActor(self.needle_actor)
-        main_ren.AddActor(self.tumor_actor)
-        # main_ren.AddActor(planeActor)
-        # main_ren.AddActor(aTetActor)
+        self.main_ren.AddVolume(self.volume)
+        self.main_ren.AddActor(self.needle_actor)
+        self.main_ren.AddActor(self.liver_actor)
+        self.main_ren.AddActor(self.tumor_actor)
 
         # logo
         # reader = vtk.vtkPNGReader()
@@ -118,13 +137,11 @@ class RenderWindow(Qt.QMainWindow):
         # imageActor.SetPosition(0.882, 1.0 )
         # print("after position")
         # imageActor.SetInputData(reader.GetOutput())
-        # main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
-        # main_ren.AddViewProp(imageActor)
+        # self.main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
+        # self.main_ren.AddViewProp(imageActor)
 
-        main_ren.AddActor(self.txtActor(1, 1, 15, 'Patient name: Hengxuan'))
-
-        main_ren.ResetCamera()
-        main_ren.ResetCameraClippingRange()
+        self.main_ren.AddActor(self.txtActor(
+            1, 1, 15, 'Patient name: Hengxuan'))
 
         # render side window
         print("render side screen 1")
@@ -132,9 +149,7 @@ class RenderWindow(Qt.QMainWindow):
         self.rw.AddRenderer(side_ren1)
         # side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
         side_ren1.SetActiveCamera(self.camera)
-        side_ren1.AddActor(self.tumor_actor)
-        # self.reslicer = vtk.vtkImageReslice()
-        # self.reslicer.SetOutPutDimensionality(2)
+        side_ren1.AddActor(self.liver_actor)
 
         side_ren1.ResetCamera()
         side_ren1.ResetCameraClippingRange()
@@ -146,9 +161,10 @@ class RenderWindow(Qt.QMainWindow):
 
         self.frame.setLayout(self.vl)
         self.setCentralWidget(self.frame)
-        cam_pos_x, cam_pos_y, cam_pos_z = self.camera.GetPosition()
-        # self.camera.SetFocalPoint(0, -500, 200)
-        self.camera.SetPosition(cam_pos_x, cam_pos_y, 1700)
+        liver_pos = self.liver_actor.GetPosition()
+        self.camera.SetFocalPoint(liver_pos)
+        self.main_ren.ResetCamera()
+        self.main_ren.ResetCameraClippingRange()
         self.show()
         self.rw.Render()
         self.iren.Start()
@@ -200,14 +216,14 @@ class RenderWindow(Qt.QMainWindow):
                 self.volume_pressed = True
             elif controller_status['menu_button'] == False and self.volume_visible == True and self.volume_pressed == True:
                 self.volume.VisibilityOff()
-                self.tumor_actor.GetProperty().SetRepresentationToWireframe()
+                self.liver_actor.GetProperty().SetRepresentationToPoints()
                 self.volume_visible = False
                 self.volume_pressed = False
             elif controller_status['menu_button'] == True and self.volume_visible == False and self.volume_pressed == False:
                 self.volume_pressed = True
             elif controller_status['menu_button'] == False and self.volume_visible == False and self.volume_pressed == True:
                 self.volume.VisibilityOn()
-                self.tumor_actor.GetProperty().SetRepresentationToSurface()
+                self.liver_actor.GetProperty().SetRepresentationToSurface()
                 self.volume_visible = True
                 self.volume_pressed = False
 
@@ -216,16 +232,18 @@ class RenderWindow(Qt.QMainWindow):
             # zoom in and out need touch but not press the trackpad
             if controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == False and controller_status["grip_button"]:
                 distance = self.camera.GetDistance()
+                print("distance : " + str(distance))
                 if controller_status['trackpad_y'] > self.zoom_var and distance - 500 > 30:
-                    self.camera.Dolly(1.02)
-                elif controller_status['trackpad_y'] < self.zoom_var and distance < 2000:
-                    self.camera.Dolly(0.98)
+                    self.camera.Dolly(1.01)
+                elif controller_status['trackpad_y'] < self.zoom_var and distance < 2500:
+                    self.camera.Dolly(0.99)
+                self.main_ren.ResetCameraClippingRange()
             # move camera need touch and press the trackpad
-            elif controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == True:
+            elif controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == True and not controller_status["grip_button"]:
                 self.camera.Azimuth(
-                    3 * self.reverse_sign(controller_status['trackpad_x']))
+                    1 * self.reverse_sign(controller_status['trackpad_x']))
                 self.camera.Elevation(
-                    3 * self.reverse_sign(controller_status['trackpad_y']))
+                    1 * self.reverse_sign(controller_status['trackpad_y']))
                 self.camera.OrthogonalizeViewUp()
 
             # since the pressure on the trigger is from 0 to 1,
@@ -236,6 +254,8 @@ class RenderWindow(Qt.QMainWindow):
                 trigger_strength = 1 - controller_status['trigger']
                 self.needle_actor.GetProperty().SetColor(
                     [1, 1 * trigger_strength, 1 * trigger_strength])
+                self.needle_actor.SetPosition(position[0] * -700, position[1]
+                                              * 700 - 400, position[2] * -300)
             else:
                 # when release the trigger, change the color of needle to white.
                 self.needle_actor.GetProperty().SetColor([1, 1, 1])
@@ -270,6 +290,7 @@ class RenderWindow(Qt.QMainWindow):
         reader = vtk.vtkSTLReader()
         reader.SetFileName("./data/handler.stl")
 
+        self.collide.SetInputConnection(1, reader.GetOutputPort())
         needle_mapper = vtk.vtkPolyDataMapper()
         needle_mapper.SetInputConnection(reader.GetOutputPort())
         needle_mapper.SetScalarVisibility(0)
