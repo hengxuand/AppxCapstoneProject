@@ -19,8 +19,10 @@ class RenderWindow(Qt.QMainWindow):
         self.setWindowTitle("VTK Render Window")
 
         self.REFRESH_RATE = 60
-        self.volume_visible = True
-        self.volume_pressed = False
+        self.liver_visible = True
+        self.skelton_visible = True
+        self.tumor_visible = True
+        self.live_is_wireframe = False
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
         self.zoom_var = 0.0
@@ -50,6 +52,7 @@ class RenderWindow(Qt.QMainWindow):
         # register callback
         self.iren.CreateRepeatingTimer(int(1 / self.REFRESH_RATE))
         self.iren.AddObserver("TimerEvent", self.callback_func)
+        self.iren.AddObserver("KeyReleaseEvent", self.key_release_func)
         self.iren.SetRenderWindow(self.rw)
 
         # get sources
@@ -62,7 +65,7 @@ class RenderWindow(Qt.QMainWindow):
         self.liver_actor.SetMapper(stlMapper)
         self.liver_actor.RotateX(-90)
         self.liver_actor.GetProperty().SetColor(1, 1, 1)
-        self.liver_actor.GetProperty().SetOpacity(0.6)
+        self.liver_actor.GetProperty().SetOpacity(1)
 
         # render main screen
         print("render main screen")
@@ -148,8 +151,6 @@ class RenderWindow(Qt.QMainWindow):
         self.main_ren.AddActor(self.txtActor(2, 22, 15, 'Age: 40 - F'))
         todaystr = date.today().strftime("%m-%d-%Y")
         self.main_ren.AddActor(self.txtActor(2, 2, 15, todaystr))
-        self.main_ren.AddActor(self.txtActor(
-            1, 1, 15, 'Patient name: Hengxuan'))
 
         # render side window
         print("render side screen 1")
@@ -204,6 +205,39 @@ class RenderWindow(Qt.QMainWindow):
         elif x < 0:
             return 1
 
+    def key_release_func(self, caller, KeyReleaseEvent):
+        released_key = self.iren.GetKeySym()
+        if released_key == 'l':
+            if self.liver_visible:
+                self.liver_actor.VisibilityOff()
+                self.liver_visible = False
+            else:
+                self.liver_actor.VisibilityOn()
+                self.liver_visible = True
+        elif released_key == 's':
+            if self.skelton_visible:
+                self.volume.VisibilityOff()
+                self.skelton_visible = False
+            else:
+                self.volume.VisibilityOn()
+                self.skelton_visible = True
+        elif released_key == 't':
+            if self.tumor_visible:
+                self.tumor_actor.VisibilityOff()
+                self.tumor_visible = False
+            else:
+                self.tumor_actor.VisibilityOn()
+                self.tumor_visible = True
+        elif released_key == 'w':
+            if self.live_is_wireframe:
+                self.liver_actor.GetProperty().SetCoatRoughness(0.9)
+                self.liver_actor.GetProperty().SetRepresentationToWireframe()
+                self.live_is_wireframe = False
+            else:
+                self.liver_actor.GetProperty().SetCoatRoughness(0.1)
+                self.liver_actor.GetProperty().SetRepresentationToSurface()
+                self.live_is_wireframe = True
+
     def callback_func(self, caller, timer_event):
         # fetch the position data
         position = self.vivecontrol.devices["controller_1"].get_pose_euler()
@@ -222,20 +256,20 @@ class RenderWindow(Qt.QMainWindow):
             print("\r" + txt, end="")
 
             # toggle objects
-            if controller_status['menu_button'] == True and self.volume_visible == True and self.volume_pressed == False:
-                self.volume_pressed = True
-            elif controller_status['menu_button'] == False and self.volume_visible == True and self.volume_pressed == True:
-                self.volume.VisibilityOff()
-                self.liver_actor.GetProperty().SetRepresentationToPoints()
-                self.volume_visible = False
-                self.volume_pressed = False
-            elif controller_status['menu_button'] == True and self.volume_visible == False and self.volume_pressed == False:
-                self.volume_pressed = True
-            elif controller_status['menu_button'] == False and self.volume_visible == False and self.volume_pressed == True:
-                self.volume.VisibilityOn()
-                self.liver_actor.GetProperty().SetRepresentationToSurface()
-                self.volume_visible = True
-                self.volume_pressed = False
+            # if controller_status['menu_button'] == True and self.volume_visible == True and self.volume_pressed == False:
+            #     self.volume_pressed = True
+            # elif controller_status['menu_button'] == False and self.volume_visible == True and self.volume_pressed == True:
+            #     self.volume.VisibilityOff()
+            #     self.liver_actor.GetProperty().SetRepresentationToPoints()
+            #     self.volume_visible = False
+            #     self.volume_pressed = False
+            # elif controller_status['menu_button'] == True and self.volume_visible == False and self.volume_pressed == False:
+            #     self.volume_pressed = True
+            # elif controller_status['menu_button'] == False and self.volume_visible == False and self.volume_pressed == True:
+            #     self.volume.VisibilityOn()
+            #     self.liver_actor.GetProperty().SetRepresentationToSurface()
+            #     self.volume_visible = True
+            #     self.volume_pressed = False
 
             # Rotation about axises on the trackpad pression
             # track_pad_border = 0.3
