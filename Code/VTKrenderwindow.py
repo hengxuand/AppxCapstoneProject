@@ -246,9 +246,11 @@ class RenderWindow(Qt.QMainWindow):
                 self.tumor_visible = True
         elif released_key == 'w':
             if self.live_is_wireframe:
+                print("set to surface")
                 self.liver_actor.GetProperty().SetRepresentationToSurface()
                 self.live_is_wireframe = False
             else:
+                print("set to wireframe")
                 self.liver_actor.GetProperty().SetRepresentationToWireframe()
                 self.live_is_wireframe = True
 
@@ -325,7 +327,8 @@ class RenderWindow(Qt.QMainWindow):
 
                     matrix.SetElement(1, 3, center[1])
                     matrix.SetElement(2, 3, center[2])
-
+        if self.live_is_wireframe:
+            self.liver_actor.GetProperty().SetRepresentationToWireframe()
         self.rw.Render()
 
     def needle(self):
