@@ -57,9 +57,25 @@ class RenderWindow(Qt.QMainWindow):
 
         # get sources
         sources = self.get_sources(ct_file, stl_file)
+
         # create liver actor to be added later on
+        liver_poly_data = sources[1].GetOutput()
+        triangles = vtk.vtkTriangleFilter()
+        triangles.SetInputData(liver_poly_data)
+        triangles.Update()
+        inputPolyData = triangles.GetOutput()
+
+        decimate = vtk.vtkDecimatePro()
+        decimate.SetInputData(inputPolyData)
+        decimate.SetTargetReduction(0.99)
+        decimate.PreserveTopologyOn()
+        decimate.Update()
+        decimated = vtk.vtkPolyData()
+        decimated.ShallowCopy(decimate.GetOutput())
+
         stlMapper = vtk.vtkPolyDataMapper()
-        stlMapper.SetInputConnection(sources[1].GetOutputPort())
+        # stlMapper.SetInputConnection(sources[1].GetOutputPort())
+        stlMapper.SetInputData(decimated)
         stlMapper.SetScalarVisibility(0)
         self.liver_actor = vtk.vtkActor()
         self.liver_actor.SetMapper(stlMapper)
@@ -230,12 +246,10 @@ class RenderWindow(Qt.QMainWindow):
                 self.tumor_visible = True
         elif released_key == 'w':
             if self.live_is_wireframe:
-                self.liver_actor.GetProperty().SetCoatRoughness(0.9)
-                self.liver_actor.GetProperty().SetRepresentationToWireframe()
+                self.liver_actor.GetProperty().SetRepresentationToSurface()
                 self.live_is_wireframe = False
             else:
-                self.liver_actor.GetProperty().SetCoatRoughness(0.1)
-                self.liver_actor.GetProperty().SetRepresentationToSurface()
+                self.liver_actor.GetProperty().SetRepresentationToWireframe()
                 self.live_is_wireframe = True
 
     def callback_func(self, caller, timer_event):
@@ -254,22 +268,6 @@ class RenderWindow(Qt.QMainWindow):
                 txt += "%.4f" % each
                 txt += " "
             print("\r" + txt, end="")
-
-            # toggle objects
-            # if controller_status['menu_button'] == True and self.volume_visible == True and self.volume_pressed == False:
-            #     self.volume_pressed = True
-            # elif controller_status['menu_button'] == False and self.volume_visible == True and self.volume_pressed == True:
-            #     self.volume.VisibilityOff()
-            #     self.liver_actor.GetProperty().SetRepresentationToPoints()
-            #     self.volume_visible = False
-            #     self.volume_pressed = False
-            # elif controller_status['menu_button'] == True and self.volume_visible == False and self.volume_pressed == False:
-            #     self.volume_pressed = True
-            # elif controller_status['menu_button'] == False and self.volume_visible == False and self.volume_pressed == True:
-            #     self.volume.VisibilityOn()
-            #     self.liver_actor.GetProperty().SetRepresentationToSurface()
-            #     self.volume_visible = True
-            #     self.volume_pressed = False
 
             # Rotation about axises on the trackpad pression
             # track_pad_border = 0.3
