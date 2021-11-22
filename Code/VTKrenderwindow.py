@@ -1,16 +1,12 @@
 import triad_openvr
 import vtk
 import sys
-import time
 from PyQt5 import (Qt, QtGui, QtCore, QtGui, QtWidgets)
 from PyQt5.QtWidgets import QAction
 from PyQt5.QtGui import QIcon
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from datetime import date
-from vtkmodules.vtkRenderingCore import (
-    vtkActor,
-    vtkImageActor)
 
 
 class RenderWindow(Qt.QMainWindow):
@@ -113,7 +109,8 @@ class RenderWindow(Qt.QMainWindow):
         # read needle and tumor
         # load needle and create actor
         needle_reader = vtk.vtkSTLReader()
-        needle_reader.SetFileName("../data/needle.stl")
+        needle_reader.SetFileName(".\data\\needle.stl")
+
         needle_mapper = vtk.vtkPolyDataMapper()
         needle_mapper.SetInputConnection(needle_reader.GetOutputPort())
         needle_mapper.SetScalarVisibility(0)
@@ -127,7 +124,7 @@ class RenderWindow(Qt.QMainWindow):
 
         # load tumor
         tumor_reader = vtk.vtkSTLReader()
-        tumor_reader.SetFileName("../data/mass.stl")
+        tumor_reader.SetFileName(".\data\\mass.stl")
         tumor_mapper = vtk.vtkPolyDataMapper()
         tumor_mapper.SetInputConnection(tumor_reader.GetOutputPort())
         tumor_mapper.SetScalarVisibility(0)
@@ -268,11 +265,9 @@ class RenderWindow(Qt.QMainWindow):
                 self.tumor_visible = True
         elif released_key == 'w':
             if self.live_is_wireframe:
-                print("set to surface")
                 self.liver_actor.GetProperty().SetRepresentationToSurface()
                 self.live_is_wireframe = False
             else:
-                print("set to wireframe")
                 self.liver_actor.GetProperty().SetRepresentationToWireframe()
                 self.live_is_wireframe = True
 
