@@ -3,7 +3,7 @@ import vtk
 import sys
 from PyQt5 import (Qt, QtGui, QtCore, QtGui, QtWidgets)
 from PyQt5.QtWidgets import QAction
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import *
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from datetime import date
@@ -28,10 +28,10 @@ class RenderWindow(Qt.QMainWindow):
         # logo
         self.setWindowIcon(QtGui.QIcon('../data/logo.png'))
 
-        tb = self.menuBar()
+        tb = self.addToolBar("Logo")
         icon = QtGui.QIcon('../data/logo.png')
         new = QAction(icon, "new", self)
-        #tb.setIconSize(QtCore.QSize(128, 128))
+        tb.setIconSize(QtCore.QSize(50, 50))
         tb.setStyleSheet("background-color: black; icon-size: 50px 50px;")
         tb.addAction(new)
 
@@ -40,6 +40,7 @@ class RenderWindow(Qt.QMainWindow):
         #tb.setStyleSheet("width: 200px")
         tb.addAction(exit)
 
+        
         print("VTK Render Window Start")
         # setup Qt frame
         self.frame = Qt.QFrame()
@@ -109,7 +110,7 @@ class RenderWindow(Qt.QMainWindow):
         # read needle and tumor
         # load needle and create actor
         needle_reader = vtk.vtkSTLReader()
-        needle_reader.SetFileName(".\data\\needle.stl")
+        needle_reader.SetFileName("../data/needle.stl")
 
         needle_mapper = vtk.vtkPolyDataMapper()
         needle_mapper.SetInputConnection(needle_reader.GetOutputPort())
@@ -124,7 +125,7 @@ class RenderWindow(Qt.QMainWindow):
 
         # load tumor
         tumor_reader = vtk.vtkSTLReader()
-        tumor_reader.SetFileName(".\data\\mass.stl")
+        tumor_reader.SetFileName("../data/mass.stl")
         tumor_mapper = vtk.vtkPolyDataMapper()
         tumor_mapper.SetInputConnection(tumor_reader.GetOutputPort())
         tumor_mapper.SetScalarVisibility(0)
