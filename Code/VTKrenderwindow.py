@@ -14,7 +14,7 @@ class RenderWindow(Qt.QMainWindow):
     def __init__(self, ct_file, stl_file, parent=None, ):
         Qt.QMainWindow.__init__(self, parent)
         self.setWindowTitle("VTK Render Window")
-
+        # self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint)
         self.deleteIcon = ".\data\\delete.svg"
         self.logIcon = ".\data\\logo.png"
         self.needle_file = ".\data\\needle.stl"
@@ -172,13 +172,13 @@ class RenderWindow(Qt.QMainWindow):
 
         # Keyboard
         self.main_ren.AddActor(self.txtActor(
-            2, 84, 20, 'Press "l" to turn on/off the LIVER'))
+            2, 84, 20, 'Press "L" to turn on/off the LIVER'))
         self.main_ren.AddActor(self.txtActor(
-            2, 64, 20, 'Press "s" to turn on/off the SKELETON'))
+            2, 64, 20, 'Press "S" to turn on/off the SKELETON'))
         self.main_ren.AddActor(self.txtActor(
-            2, 44, 20, 'Press "t" to turn on/off the TUMOR'))
+            2, 44, 20, 'Press "T" to turn on/off the TUMOR'))
         self.main_ren.AddActor(self.txtActor(
-            2, 24, 20, 'Press "w" to turn on/off the WIREFRAME for liver'))
+            2, 24, 20, 'Press "W" to turn on/off the WIREFRAME for liver'))
         self.main_ren.AddActor(self.txtActor(
             2, 4, 20, 'Press "Alt + F4" for EXIT'))
 
