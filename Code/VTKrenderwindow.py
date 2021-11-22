@@ -15,6 +15,11 @@ class RenderWindow(Qt.QMainWindow):
         Qt.QMainWindow.__init__(self, parent)
         self.setWindowTitle("VTK Render Window")
 
+        self.deleteIcon = ".\data\\delete.svg"
+        self.logIcon = ".\data\\logo.png"
+        self.needle_file = ".\data\\needle.stl"
+        self.tumor_file = ".\data\\mass.stl"
+
         self.REFRESH_RATE = 60
         self.liver_visible = True
         self.skelton_visible = True
@@ -26,21 +31,20 @@ class RenderWindow(Qt.QMainWindow):
         self.liver_hp = 100
 
         # logo
-        self.setWindowIcon(QtGui.QIcon('../data/logo.png'))
+        self.setWindowIcon(QtGui.QIcon(self.logIcon))
 
         tb = self.addToolBar("Logo")
-        icon = QtGui.QIcon('../data/logo.png')
+        icon = QtGui.QIcon(self.logIcon)
         new = QAction(icon, "new", self)
         tb.setIconSize(QtCore.QSize(50, 50))
         tb.setStyleSheet("background-color: black; icon-size: 50px 50px;")
         tb.addAction(new)
 
-        exit = QAction(QtGui.QIcon('../data/delete.svg'), "exit", self)
+        exit = QAction(QtGui.QIcon(self.deleteIcon), "exit", self)
         exit.triggered.connect(self.close_application)
         #tb.setStyleSheet("width: 200px")
         tb.addAction(exit)
 
-        
         print("VTK Render Window Start")
         # setup Qt frame
         self.frame = Qt.QFrame()
@@ -110,7 +114,7 @@ class RenderWindow(Qt.QMainWindow):
         # read needle and tumor
         # load needle and create actor
         needle_reader = vtk.vtkSTLReader()
-        needle_reader.SetFileName("../data/needle.stl")
+        needle_reader.SetFileName(self.needle_file)
 
         needle_mapper = vtk.vtkPolyDataMapper()
         needle_mapper.SetInputConnection(needle_reader.GetOutputPort())
@@ -125,7 +129,7 @@ class RenderWindow(Qt.QMainWindow):
 
         # load tumor
         tumor_reader = vtk.vtkSTLReader()
-        tumor_reader.SetFileName("../data/mass.stl")
+        tumor_reader.SetFileName(self.tumor_file)
         tumor_mapper = vtk.vtkPolyDataMapper()
         tumor_mapper.SetInputConnection(tumor_reader.GetOutputPort())
         tumor_mapper.SetScalarVisibility(0)
