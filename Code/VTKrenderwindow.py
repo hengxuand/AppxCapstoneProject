@@ -3,10 +3,13 @@ import vtk
 import sys
 from PyQt5 import (Qt, QtGui, QtCore, QtGui, QtWidgets)
 from PyQt5.QtWidgets import QAction
-from PyQt5.QtGui import *
+from PyQt5.QtGui import QIcon
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from datetime import date
+from vtkmodules.vtkRenderingCore import (
+    vtkActor,
+    vtkImageActor)
 
 
 class RenderWindow(Qt.QMainWindow):
@@ -201,10 +204,17 @@ class RenderWindow(Qt.QMainWindow):
         side_ren1.ResetCamera()
         side_ren1.ResetCameraClippingRange()
 
-        side_ren2 = self.vtkRender(2)
-        (sactor, self.reslice) = self.slice(sources[0])
-        side_ren2.AddActor(sactor)
-        self.rw.AddRenderer(side_ren2)
+        # side_ren2 = self.vtkRender(2)
+        # (actors, reslices) = self.slice(sources[0])
+        # side_ren2.AddActor(actors)
+        # self.rw.AddRenderer(side_ren2)
+        self.slice_index = 0
+        (actors, self.reslices) = self.slice(sources[0])
+        for i in range(len(actors)):
+            side_ren = self.vtkRender(i+2)
+            side_ren.AddActor(actors[i])
+            self.rw.AddRenderer(side_ren)
+
 
         self.frame.setLayout(self.vl)
         self.setCentralWidget(self.frame)
@@ -275,6 +285,14 @@ class RenderWindow(Qt.QMainWindow):
             else:
                 self.liver_actor.GetProperty().SetRepresentationToWireframe()
                 self.live_is_wireframe = True
+        if released_key == "F1":
+            self.slice_index = 0
+
+        if released_key == "F2":
+            self.slice_index = 1
+
+        if released_key == "F3":
+            self.slice_index = 2
 
     def callback_func(self, caller, timer_event):
         # fetch the position data
@@ -296,7 +314,7 @@ class RenderWindow(Qt.QMainWindow):
             # Rotation about axises on the trackpad pression
             # track_pad_border = 0.3
             # zoom in and out need touch but not press the trackpad
-            if controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == False and controller_status["grip_button"]:
+            if controller_status['trackpad_touched'] == True and controller_status['trackpad_pressed'] == False and not controller_status["grip_button"]:
                 distance = self.camera.GetDistance()
                 print("distance : " + str(distance))
                 if controller_status['trackpad_y'] > self.zoom_var and distance - 500 > 30:
@@ -335,8 +353,9 @@ class RenderWindow(Qt.QMainWindow):
                 print(pY)
 
                 if pY != 0:
-                    self.reslice.Update()
-                    matrix = self.reslice.GetResliceAxes()
+                    reslice = self.reslices[self.slice_index]
+                    reslice.Update()
+                    matrix = reslice.GetResliceAxes()
                     # move the center point that we are slicing through
                     center = matrix.MultiplyPoint((0, 0, pY, 1))
                     print(center)
@@ -408,10 +427,11 @@ class RenderWindow(Qt.QMainWindow):
 
     def vtkRender(self, pos):
         # Define viewport ranges.
-        xmins = [0, .5, 0.5]
-        xmaxs = [0.5, 1, 1]
-        ymins = [0, 0.5, 0]
-        ymaxs = [1, 1, 0.5]
+        # Index 0: main view 1: logo view, 2: slice view top 3:slice view front 4: slice view side
+        xmins = [0, 0.5, 0.5, 0.5, 0.5]
+        xmaxs = [0.5, 1, 1, 1, 1]
+        ymins = [0, 0.75, 0.5, 0.25, 0]
+        ymaxs = [1, 1, 0.75, 0.5, 0.25]
 
         ren = vtk.vtkRenderer()
         ren.SetViewport(xmins[pos], ymins[pos], xmaxs[pos], ymaxs[pos])
@@ -452,51 +472,61 @@ class RenderWindow(Qt.QMainWindow):
                   z0 + zSpacing * 0.5 * (zMin + zMax)]
 
         # Matrices for axial, coronal, sagittal, oblique view orientations
+        # Top view
         axial = vtk.vtkMatrix4x4()
         axial.DeepCopy((1, 0, 0, center[0],
                         0, 1, 0, center[1],
                         0, 0, 1, center[2],
                         0, 0, 0, 1))
 
+        # Front view
         coronal = vtk.vtkMatrix4x4()
         coronal.DeepCopy((1, 0, 0, center[0],
                           0, 0, 1, center[1],
                           0, -1, 0, center[2],
                           0, 0, 0, 1))
-
+        # Side view
         sagittal = vtk.vtkMatrix4x4()
         sagittal.DeepCopy((0, 0, -1, center[0],
                            1, 0, 0, center[1],
                            0, -1, 0, center[2],
                            0, 0, 0, 1))
 
+        # top view
         oblique = vtk.vtkMatrix4x4()
         oblique.DeepCopy((1, 0, 0, center[0],
                           0, 0.866025, -0.5, center[1],
                           0, 0.5, 0.866025, center[2],
                           0, 0, 0, 1))
 
-        # Extract a slice in the desired orientation
-        reslice = vtk.vtkImageReslice()
-        reslice.SetInputConnection(ctsource.GetOutputPort())
-        reslice.SetOutputDimensionality(2)
-        reslice.SetResliceAxes(sagittal)
-        reslice.SetInterpolationModeToLinear()
+        viewOri = [axial, coronal, sagittal]
+        actors = []
+        reslices = []
+        for view in viewOri:
+            # Extract a slice in the desired orientation
+            reslice = vtk.vtkImageReslice()
+            reslice.SetInputConnection(ctsource.GetOutputPort())
+            reslice.SetOutputDimensionality(2)
+            reslice.SetResliceAxes(view)
+            reslice.SetInterpolationModeToLinear()
 
-        # Create a greyscale lookup table
-        table = vtk.vtkLookupTable()
-        table.SetRange(0, 2000)  # image intensity range
-        table.SetValueRange(0.0, 1.0)  # from black to white
-        table.SetSaturationRange(0.0, 0.0)  # no color saturation
-        table.SetRampToLinear()
-        table.Build()
+            # Create a greyscale lookup table
+            table = vtk.vtkLookupTable()
+            table.SetRange(0, 2000)  # image intensity range
+            table.SetValueRange(0.0, 1.0)  # from black to white
+            table.SetSaturationRange(0.0, 0.0)  # no color saturation
+            table.SetRampToLinear()
+            table.Build()
 
-        # Map the image through the lookup table
-        color = vtk.vtkImageMapToColors()
-        color.SetLookupTable(table)
-        color.SetInputConnection(reslice.GetOutputPort())
+            # Map the image through the lookup table
+            color = vtk.vtkImageMapToColors()
+            color.SetLookupTable(table)
+            color.SetInputConnection(reslice.GetOutputPort())
 
-        actor = vtk.vtkImageActor()
-        actor.GetMapper().SetInputConnection(color.GetOutputPort())
+            actor = vtk.vtkImageActor()
+            actor.GetMapper().SetInputConnection(color.GetOutputPort())
 
-        return actor, reslice
+            actors.append(actor)
+            reslices.append(reslice)
+
+        return actors, reslices
