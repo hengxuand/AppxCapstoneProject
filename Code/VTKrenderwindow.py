@@ -1,9 +1,8 @@
 import triad_openvr
 import vtk
 import time
-from PyQt5 import Qt
-from PyQt5 import QtGui
-from PyQt5 import QtCore
+from PyQt5 import (Qt, QtGui, QtCore)
+from PyQt5.QtWidgets import *
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from datetime import date
@@ -124,23 +123,7 @@ class RenderWindow(Qt.QMainWindow):
         self.tumor_actor.SetPosition([-200, -390, 200])
         self.tumor_actor.GetProperty().SetColor([1, 0.6, 0.2])
         self.tumor_actor.GetProperty().SetOpacity(1)
-        # self.tumor_actor.GetProperty().SetInterpolationToPhong()
         self.tumor_actor.GetProperty().SetRepresentationToSurface()
-
-        # actors collision detection
-        # self.matrix1 = vtk.vtkMatrix4x4()
-        # self.transform0 = vtk.vtkTransform()
-        # self.collide = vtk.vtkCollisionDetectionFilter()
-        # self.collide.SetInputConnection(0, sources[1].GetOutputPort())
-        # self.collide.SetTransform(0, self.transform0)
-        # self.collide.SetInputConnection(1, needle_reader.GetOutputPort())
-        # self.collide.SetMatrix(1, self.matrix1)
-        # self.collide.SetBoxTolerance(0.0)
-        # self.collide.SetCellTolerance(0.0)
-        # self.collide.SetNumberOfCellsPerNode(2)
-        # self.collide.SetCollisionModeToAllContacts()
-        # self.collide.GenerateScalarsOn()
-        # print("self.collide.GetNumberOfContacts()")
 
         self.main_ren.AddVolume(self.volume)
         self.main_ren.AddActor(self.needle_actor)
