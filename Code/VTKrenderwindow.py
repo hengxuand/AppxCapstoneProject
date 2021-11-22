@@ -1,8 +1,10 @@
 import triad_openvr
 import vtk
+import sys
 import time
-from PyQt5 import (Qt, QtGui, QtCore)
-from PyQt5.QtWidgets import *
+from PyQt5 import (Qt, QtGui, QtCore, QtGui, QtWidgets)
+from PyQt5.QtWidgets import QAction
+from PyQt5.QtGui import QIcon
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from datetime import date
@@ -28,7 +30,19 @@ class RenderWindow(Qt.QMainWindow):
         self.liver_hp = 100
 
         # logo
-        self.setWindowIcon(QtGui.QIcon('./data/logo.png'))
+        self.setWindowIcon(QtGui.QIcon('../data/logo.png'))
+
+        tb = self.menuBar()
+        icon = QtGui.QIcon('../data/logo.png')
+        new = QAction(icon, "new", self)
+        #tb.setIconSize(QtCore.QSize(128, 128))
+        tb.setStyleSheet("background-color: black; icon-size: 50px 50px;")
+        tb.addAction(new)
+
+        exit = QAction(QtGui.QIcon('../data/delete.svg'), "exit", self)
+        exit.triggered.connect(self.close_application)
+        #tb.setStyleSheet("width: 200px")
+        tb.addAction(exit)
 
         print("VTK Render Window Start")
         # setup Qt frame
@@ -99,7 +113,7 @@ class RenderWindow(Qt.QMainWindow):
         # read needle and tumor
         # load needle and create actor
         needle_reader = vtk.vtkSTLReader()
-        needle_reader.SetFileName("./data/needle.stl")
+        needle_reader.SetFileName("../data/needle.stl")
         needle_mapper = vtk.vtkPolyDataMapper()
         needle_mapper.SetInputConnection(needle_reader.GetOutputPort())
         needle_mapper.SetScalarVisibility(0)
@@ -113,7 +127,7 @@ class RenderWindow(Qt.QMainWindow):
 
         # load tumor
         tumor_reader = vtk.vtkSTLReader()
-        tumor_reader.SetFileName("./data/mass.stl")
+        tumor_reader.SetFileName("../data/mass.stl")
         tumor_mapper = vtk.vtkPolyDataMapper()
         tumor_mapper.SetInputConnection(tumor_reader.GetOutputPort())
         tumor_mapper.SetScalarVisibility(0)
@@ -131,11 +145,14 @@ class RenderWindow(Qt.QMainWindow):
         self.main_ren.AddActor(self.tumor_actor)
 
         # logo
-        reader = vtk.vtkPNGReader()
-        reader.SetFileName("./data/logo.png")
-        reader.Update()
-        logo = vtk.vtkLogoRepresentation()
-        logo.SetImage(reader.GetOutput())
+        # reader = vtk.vtkPNGReader()
+        # reader.SetFileName("../data/logo.png")
+        # reader.Update()
+        # logo = vtk.vtkLogoRepresentation()
+        # logo.SetImage(reader.GetOutput())
+        # logo.SetPosition(10,10)
+        # logo.GetImageProperty().SetOpacity(1.0)
+        # logoWidget = vtk.vtkLogoWidget()
 
         # logo.ProportionalResizeOn()
         # logo.SetPosition(20, 20)
@@ -143,20 +160,38 @@ class RenderWindow(Qt.QMainWindow):
         # logoWidget = vtk.vtkLogoWidget()
 
         # imageActor.SetInputData(reader.GetOutput())
-        #main_ren.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 
+        # Patient Info
         self.main_ren.AddActor(self.txtActor(
-            2, 42, 15, 'Patient name: Alex Smith'))
-        self.main_ren.AddActor(self.txtActor(2, 22, 15, 'Age: 40 - F'))
+            2, 980, 15, 'Patient name: Alex Smith'))
+        self.main_ren.AddActor(self.txtActor(2, 960, 15, 'Age: 40 - F'))
         todaystr = date.today().strftime("%m-%d-%Y")
-        self.main_ren.AddActor(self.txtActor(2, 2, 15, todaystr))
+        self.main_ren.AddActor(self.txtActor(2, 940, 15, todaystr))
+
+        # Keyboard
+        self.main_ren.AddActor(self.txtActor(
+            2, 84, 20, 'Press "l" to turn on/off the LIVER'))
+        self.main_ren.AddActor(self.txtActor(
+            2, 64, 20, 'Press "s" to turn on/off the SKELETON'))
+        self.main_ren.AddActor(self.txtActor(
+            2, 44, 20, 'Press "t" to turn on/off the TUMOR'))
+        self.main_ren.AddActor(self.txtActor(
+            2, 24, 20, 'Press "w" to turn on/off the WIREFRAME for liver'))
+        self.main_ren.AddActor(self.txtActor(
+            2, 4, 20, 'Press "Alt + F4" for EXIT'))
 
         # render side window
         print("render side screen 1")
         side_ren1 = self.vtkRender(1)
-        side_ren1.AddViewProp(logo)
-        logo.SetRenderer(side_ren1)
+        # side_ren1.AddViewProp(logo)
+        # logo.SetRenderer(side_ren1)
         self.rw.AddRenderer(side_ren1)
+
+        # logoWidget.SetInteractor(self.iren)
+        # logoWidget.SetRepresentation(logo)
+        # logoWidget.On()
+        # print("NINA")
+
         # side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
         side_ren1.SetActiveCamera(self.camera)
         side_ren1.AddActor(self.liver_actor)
@@ -178,6 +213,10 @@ class RenderWindow(Qt.QMainWindow):
         self.show()
         self.rw.Render()
         self.iren.Start()
+
+    def close_application(self):
+        print("Good Bye!!!")
+        sys.exit()
 
     def get_sources(self, ct_file, stl_file):
         sources = list()
