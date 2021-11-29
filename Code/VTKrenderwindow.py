@@ -367,6 +367,28 @@ class RenderWindow(Qt.QMainWindow):
         if released_key == "F3":
             self.key_hold = False
 
+        if released_key == "F4":
+
+            center = self.needle_actor.GetPosition()
+
+            for i in range(3):
+                reslice = self.reslices[i]
+                matrix = reslice.GetResliceAxes()
+                mcenter = matrix.MultiplyPoint((0, 0, 0, 1))
+
+                if i == 0:
+                    matrix.SetElement(0, 3, mcenter[0])
+                    matrix.SetElement(1, 3, mcenter[1])
+                    matrix.SetElement(2, 3, center[1])
+                if i == 1:
+                    matrix.SetElement(0, 3, mcenter[0])
+                    matrix.SetElement(1, 3, -center[2])
+                    matrix.SetElement(2, 3, mcenter[2])
+                if i == 2:
+                    matrix.SetElement(0, 3, center[0])
+                    matrix.SetElement(1, 3, mcenter[1])
+                    matrix.SetElement(2, 3, mcenter[2])
+
     def MouseMoveCallback(self, obj, event):
         (lastX, lastY) = self.iren.GetLastEventPosition()
         (mouseX, mouseY) = self.iren.GetEventPosition()
@@ -378,6 +400,10 @@ class RenderWindow(Qt.QMainWindow):
             matrix = reslice.GetResliceAxes()
             # move the center point that we are slicing through
             center = matrix.MultiplyPoint((0, 0, sliceSpacing * deltaY, 1))
+            print("/n")
+            print(self.needle_actor.GetPosition())
+            print(center)
+            print("/n")
             matrix.SetElement(0, 3, center[0])
             matrix.SetElement(1, 3, center[1])
             matrix.SetElement(2, 3, center[2])
@@ -402,7 +428,6 @@ class RenderWindow(Qt.QMainWindow):
 
             # move the cursor along the needle
             self.cursor_actor.SetPosition(self.needle_actor.GetPosition())
-
             # Rotation about axises on the trackpad pression
             # track_pad_border = 0.3
             # zoom in and out need touch but not press the trackpad
@@ -425,7 +450,7 @@ class RenderWindow(Qt.QMainWindow):
             # I decided compute the trigger strength use 1 - controller_status['trigger']
             # change the color of the needle from (1, 1, 1) to (1, 1 * trigger strength, )
             if controller_status['trigger'] > 0.1:
-                print(controller_status)
+                # print(controller_status)
                 trigger_strength = 1 - controller_status['trigger']
                 self.needle_actor.GetProperty().SetColor(
                     [1, 1 * trigger_strength, 1 * trigger_strength])
