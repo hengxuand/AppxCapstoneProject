@@ -42,10 +42,10 @@ class RenderWindow(Qt.QMainWindow):
         tb.setStyleSheet("background-color: black; icon-size: 100px 100px;")
         tb.addAction(new)
 
-        # exit = QAction(QtGui.QIcon(self.deleteIcon), "exit", self)
-        # exit.triggered.connect(self.close_application)
-        # #tb.setStyleSheet("width: 200px")
-        # tb.addAction(exit)
+        exit = QAction(QtGui.QIcon(self.deleteIcon), "exit", self)
+        exit.triggered.connect(self.close_application)
+        #tb.setStyleSheet("width: 200px")
+        tb.addAction(exit)
 
         print("VTK Render Window Start")
         # setup Qt frame
@@ -66,9 +66,12 @@ class RenderWindow(Qt.QMainWindow):
         self.iren.Initialize()
 
         # register callback
+        self.key_hold = False
         self.iren.CreateRepeatingTimer(int(1 / self.REFRESH_RATE))
         self.iren.AddObserver("TimerEvent", self.callback_func)
+        self.iren.AddObserver("KeyPressEvent", self.key_press_func)
         self.iren.AddObserver("KeyReleaseEvent", self.key_release_func)
+        self.iren.AddObserver("MouseMoveEvent", self.MouseMoveCallback)
         self.iren.SetRenderWindow(self.rw)
 
         # get sources
@@ -259,10 +262,11 @@ class RenderWindow(Qt.QMainWindow):
         self.slice_index = 0
         (actors, self.reslices) = self.slice(sources[0])
         for i in range(len(actors)):
-            side_ren = self.vtkRender(i+2)
+            side_ren = self.vtkRender(i + 2)
             side_ren.AddActor(actors[i])
             self.rw.AddRenderer(side_ren)
 
+        self.vtkViewportBorder()
         self.frame.setLayout(self.vl)
         self.setCentralWidget(self.frame)
         # liver_pos = self.liver_actor.GetPosition()
@@ -309,6 +313,22 @@ class RenderWindow(Qt.QMainWindow):
         elif x < 0:
             return 1
 
+    def key_press_func(self, caller, event):
+        press_key = self.iren.GetKeySym()
+
+        if press_key == "F1":
+            self.slice_index = 0
+            self.key_hold = True
+
+        if press_key == "F2":
+            self.slice_index = 1
+            self.key_hold = True
+
+        if press_key == "F3":
+            self.slice_index = 2
+            self.key_hold = True
+
+
     def key_release_func(self, caller, KeyReleaseEvent):
         released_key = self.iren.GetKeySym()
         if released_key == 'l':
@@ -340,13 +360,29 @@ class RenderWindow(Qt.QMainWindow):
                 self.liver_actor.GetProperty().SetRepresentationToWireframe()
                 self.live_is_wireframe = True
         if released_key == "F1":
-            self.slice_index = 0
+            self.key_hold = False
 
         if released_key == "F2":
-            self.slice_index = 1
+            self.key_hold = False
 
         if released_key == "F3":
-            self.slice_index = 2
+            self.key_hold = False
+
+    def MouseMoveCallback(self, obj, event):
+        (lastX, lastY) = self.iren.GetLastEventPosition()
+        (mouseX, mouseY) = self.iren.GetEventPosition()
+        if self.key_hold:
+            reslice = self.reslices[self.slice_index]
+            deltaY = mouseY - lastY
+            reslice.Update()
+            sliceSpacing = reslice.GetOutput().GetSpacing()[2]
+            matrix = reslice.GetResliceAxes()
+            # move the center point that we are slicing through
+            center = matrix.MultiplyPoint((0, 0, sliceSpacing * deltaY, 1))
+            matrix.SetElement(0, 3, center[0])
+            matrix.SetElement(1, 3, center[1])
+            matrix.SetElement(2, 3, center[2])
+
 
     def callback_func(self, caller, timer_event):
         # fetch the position data
@@ -405,26 +441,32 @@ class RenderWindow(Qt.QMainWindow):
                 self.needle_actor.SetOrientation(
                     -position[5], -position[4], -position[3])
 
-            if controller_status['grip_button']:
-                pY = controller_status['trackpad_y']
-                print(pY)
+                # self.assembly.SetPosition(position[0] * -700, position[1]
+                #                           * 700 - 400, position[2] * -300)
+                # self.assembly.SetOrientation(
+                #     -position[5], -position[4], -position[3])
 
-                if pY != 0:
-                    reslice = self.reslices[self.slice_index]
-                    reslice.Update()
-                    matrix = reslice.GetResliceAxes()
-                    # move the center point that we are slicing through
-                    center = matrix.MultiplyPoint((0, 0, pY, 1))
-                    print(center)
-                    if -194 > center[0]:
-                        matrix.SetElement(0, 3, -193)
-                    elif 194 < center[0]:
-                        matrix.SetElement(0, 3, 193)
-                    else:
-                        matrix.SetElement(0, 3, center[0])
-
-                    matrix.SetElement(1, 3, center[1])
-                    matrix.SetElement(2, 3, center[2])
+            # controller control slice movement
+            # if controller_status['grip_button']:
+            #     pY = controller_status['trackpad_y']
+            #     print(pY)
+            #
+            #     if pY != 0:
+            #         reslice = self.reslices[self.slice_index]
+            #         reslice.Update()
+            #         matrix = reslice.GetResliceAxes()
+            #         # move the center point that we are slicing through
+            #         center = matrix.MultiplyPoint((0, 0, pY, 1))
+            #         print(center)
+            #         if -194 > center[0]:
+            #             matrix.SetElement(0, 3, -193)
+            #         elif 194 < center[0]:
+            #             matrix.SetElement(0, 3, 193)
+            #         else:
+            #             matrix.SetElement(0, 3, center[0])
+            #
+            #         matrix.SetElement(1, 3, center[1])
+            #         matrix.SetElement(2, 3, center[2])
         # self.needle_actor.GetProperty().SetRepresentationToSurface()
         if self.live_is_wireframe:
             self.liver_actor.GetProperty().SetRepresentationToWireframe()
@@ -484,15 +526,27 @@ class RenderWindow(Qt.QMainWindow):
     def vtkRender(self, pos):
         # Define viewport ranges.
         # Index 0: main view 1: logo view, 2: slice view top 3:slice view front 4: slice view side
-        xmins = [0, 0.5, 0.5, 0.5, 0.5]
-        xmaxs = [0.5, 1, 1, 1, 1]
-        ymins = [0, 0.75, 0.5, 0.25, 0]
-        ymaxs = [1, 1, 0.75, 0.5, 0.25]
+        xmins = [0, 0.6, 0.6, 0.6, 0.6]
+        xmaxs = [0.599, 1, 1, 1, 1]
+        ymins = [0, 0.749, 0.499, 0.249, 0]
+        ymaxs = [1, 1, 0.749, 0.499, 0.249]
 
         ren = vtk.vtkRenderer()
         ren.SetViewport(xmins[pos], ymins[pos], xmaxs[pos], ymaxs[pos])
 
         return ren
+
+    def vtkViewportBorder(self):
+        xmins = [0.599, 0.6, 0.6, 0.6]
+        xmaxs = [0.6, 1, 1, 1]
+        ymins = [0, 0.749, 0.499, 0.249]
+        ymaxs = [1, 0.75, 0.5, 0.25]
+
+        for pos in range(4):
+            ren = vtk.vtkRenderer()
+            ren.SetBackground(85, 85, 85)
+            ren.SetViewport(xmins[pos], ymins[pos], xmaxs[pos], ymaxs[pos])
+            self.rw.AddRenderer(ren)
 
     def txtActor(self, Xpos, Ypos, Fontsize, text):
         txt = vtk.vtkTextActor()
