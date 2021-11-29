@@ -42,10 +42,10 @@ class RenderWindow(Qt.QMainWindow):
         tb.setStyleSheet("background-color: black; icon-size: 100px 100px;")
         tb.addAction(new)
 
-        exit = QAction(QtGui.QIcon(self.deleteIcon), "exit", self)
-        exit.triggered.connect(self.close_application)
-        #tb.setStyleSheet("width: 200px")
-        tb.addAction(exit)
+        # exit = QAction(QtGui.QIcon(self.deleteIcon), "exit", self)
+        # exit.triggered.connect(self.close_application)
+        # #tb.setStyleSheet("width: 200px")
+        # tb.addAction(exit)
 
         print("VTK Render Window Start")
         # setup Qt frame
@@ -328,7 +328,6 @@ class RenderWindow(Qt.QMainWindow):
             self.slice_index = 2
             self.key_hold = True
 
-
     def key_release_func(self, caller, KeyReleaseEvent):
         released_key = self.iren.GetKeySym()
         if released_key == 'l':
@@ -382,7 +381,6 @@ class RenderWindow(Qt.QMainWindow):
             matrix.SetElement(0, 3, center[0])
             matrix.SetElement(1, 3, center[1])
             matrix.SetElement(2, 3, center[2])
-
 
     def callback_func(self, caller, timer_event):
         # fetch the position data
