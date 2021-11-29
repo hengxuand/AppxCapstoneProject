@@ -22,7 +22,7 @@ class RenderWindow(Qt.QMainWindow):
         self.tumor_file = ".\data\\mass.stl"
         self.focal_point = [-100, -390, 250]
 
-        self.REFRESH_RATE = 60
+        self.REFRESH_RATE = 180
         self.liver_visible = True
         self.skelton_visible = True
         self.tumor_visible = True
@@ -38,14 +38,14 @@ class RenderWindow(Qt.QMainWindow):
         tb = self.addToolBar("Logo")
         icon = QtGui.QIcon(self.logIcon)
         new = QAction(icon, "new", self)
-        tb.setIconSize(QtCore.QSize(50, 50))
-        tb.setStyleSheet("background-color: black; icon-size: 50px 50px;")
+        tb.setIconSize(QtCore.QSize(100, 100))
+        tb.setStyleSheet("background-color: black; icon-size: 100px 100px;")
         tb.addAction(new)
 
-        exit = QAction(QtGui.QIcon(self.deleteIcon), "exit", self)
-        exit.triggered.connect(self.close_application)
-        #tb.setStyleSheet("width: 200px")
-        tb.addAction(exit)
+        # exit = QAction(QtGui.QIcon(self.deleteIcon), "exit", self)
+        # exit.triggered.connect(self.close_application)
+        # #tb.setStyleSheet("width: 200px")
+        # tb.addAction(exit)
 
         print("VTK Render Window Start")
         # setup Qt frame
@@ -76,6 +76,10 @@ class RenderWindow(Qt.QMainWindow):
 
         # create liver actor to be added later on
         liver_poly_data = sources[1].GetOutput()
+
+        # delaunay3D = vtk.vtkDelaunay3D()
+        # delaunay3D.SetInputData(liver_poly_data)
+
         triangles = vtk.vtkTriangleFilter()
         triangles.SetInputData(liver_poly_data)
         triangles.Update()
@@ -96,7 +100,7 @@ class RenderWindow(Qt.QMainWindow):
         self.liver_actor = vtk.vtkActor()
         self.liver_actor.SetMapper(stlMapper)
         self.liver_actor.RotateX(-90)
-        self.liver_actor.GetProperty().SetColor(1, 0.8, 0.6)
+        self.liver_actor.GetProperty().SetColor(1, 1, 1)
         self.liver_actor.GetProperty().SetOpacity(1)
 
         # render main screen
@@ -117,7 +121,11 @@ class RenderWindow(Qt.QMainWindow):
         # load needle and create actor
         needle_reader = vtk.vtkSTLReader()
         needle_reader.SetFileName(self.needle_file)
-
+        # needle_poly = needle_reader.GetOutput()
+        # print(needle_poly)
+        # needle_reader = vtk.vtkArrowSource()
+        # needle_poly = needle_reader.GetOutput()
+        # print(needle_poly)
         needle_mapper = vtk.vtkPolyDataMapper()
         needle_mapper.SetInputConnection(needle_reader.GetOutputPort())
         # needle_mapper.SetScalarVisibility(0)
@@ -127,6 +135,8 @@ class RenderWindow(Qt.QMainWindow):
         self.needle_actor.GetProperty().SetColor([1, 1, 1])
         self.needle_actor.GetProperty().SetOpacity(1)
         self.needle_actor.SetOrigin(-16.8, 1.5, 3.0)
+        # print(self.needle_actor)
+        # print("i = " + str(self.i) + self.needle_actor.GetPoint(self.i))
 
         # create 3d cursor attached to the tip of the needle
         self.cursor_3d = vtk.vtkCursor3D()
@@ -394,11 +404,6 @@ class RenderWindow(Qt.QMainWindow):
                                               * 700 - 400, position[2] * -300)
                 self.needle_actor.SetOrientation(
                     -position[5], -position[4], -position[3])
-
-                # self.assembly.SetPosition(position[0] * -700, position[1]
-                #                           * 700 - 400, position[2] * -300)
-                # self.assembly.SetOrientation(
-                #     -position[5], -position[4], -position[3])
 
             if controller_status['grip_button']:
                 pY = controller_status['trackpad_y']
