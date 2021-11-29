@@ -238,10 +238,10 @@ class RenderWindow(Qt.QMainWindow):
 
         # render side window
         print("render side screen 1")
-        side_ren1 = self.vtkRender(1)
-        # side_ren1.AddViewProp(logo)
-        # logo.SetRenderer(side_ren1)
-        self.rw.AddRenderer(side_ren1)
+        # side_ren1 = self.vtkRender(1)
+        # # side_ren1.AddViewProp(logo)
+        # # logo.SetRenderer(side_ren1)
+        # self.rw.AddRenderer(side_ren1)
 
         # logoWidget.SetInteractor(self.iren)
         # logoWidget.SetRepresentation(logo)
@@ -249,11 +249,11 @@ class RenderWindow(Qt.QMainWindow):
         # print("NINA")
 
         # side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
-        side_ren1.SetActiveCamera(self.camera)
-        side_ren1.AddActor(self.liver_actor)
-
-        side_ren1.ResetCamera()
-        side_ren1.ResetCameraClippingRange()
+        # side_ren1.SetActiveCamera(self.camera)
+        # side_ren1.AddActor(self.liver_actor)
+        #
+        # side_ren1.ResetCamera()
+        # side_ren1.ResetCameraClippingRange()
 
         # side_ren2 = self.vtkRender(2)
         # (actors, reslices) = self.slice(sources[0])
@@ -262,7 +262,7 @@ class RenderWindow(Qt.QMainWindow):
         self.slice_index = 0
         (actors, self.reslices) = self.slice(sources[0])
         for i in range(len(actors)):
-            side_ren = self.vtkRender(i + 2)
+            side_ren = self.vtkRender(i + 1)
             side_ren.AddActor(actors[i])
             self.rw.AddRenderer(side_ren)
 
@@ -526,10 +526,10 @@ class RenderWindow(Qt.QMainWindow):
     def vtkRender(self, pos):
         # Define viewport ranges.
         # Index 0: main view 1: logo view, 2: slice view top 3:slice view front 4: slice view side
-        xmins = [0, 0.6, 0.6, 0.6, 0.6]
-        xmaxs = [0.599, 1, 1, 1, 1]
-        ymins = [0, 0.749, 0.499, 0.249, 0]
-        ymaxs = [1, 1, 0.749, 0.499, 0.249]
+        xmins = [0, 0.7, 0.7, 0.7]
+        xmaxs = [0.699, 0.999, 0.999, 0.999]
+        ymins = [0, 0.601, 0.301, 0.001]
+        ymaxs = [1, 0.9, 0.6, 0.3]
 
         ren = vtk.vtkRenderer()
         ren.SetViewport(xmins[pos], ymins[pos], xmaxs[pos], ymaxs[pos])
@@ -537,12 +537,12 @@ class RenderWindow(Qt.QMainWindow):
         return ren
 
     def vtkViewportBorder(self):
-        xmins = [0.599, 0.6, 0.6, 0.6]
-        xmaxs = [0.6, 1, 1, 1]
-        ymins = [0, 0.749, 0.499, 0.249]
-        ymaxs = [1, 0.75, 0.5, 0.25]
+        xmins = [0.699, 0.999, 0.7, 0.7, 0.7, 0.7, 0, 0, 0]
+        xmaxs = [0.7, 1, 0.999, 0.999, 0.999, 0.999, 0.001, 0.699, 0.699]
+        ymins = [0, 0, 0.999, 0.6, 0.3, 0, 0, 0.999, 0]
+        ymaxs = [1, 1, 1, 0.601, 0.301, 0.001, 1, 1, 0.001]
 
-        for pos in range(4):
+        for pos in range(9):
             ren = vtk.vtkRenderer()
             ren.SetBackground(85, 85, 85)
             ren.SetViewport(xmins[pos], ymins[pos], xmaxs[pos], ymaxs[pos])
