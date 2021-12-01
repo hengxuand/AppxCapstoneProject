@@ -15,18 +15,17 @@ class RenderWindow(Qt.QMainWindow):
     def __init__(self, ct_file, stl_file, parent=None, ):
         Qt.QMainWindow.__init__(self, parent)
         self.setWindowTitle("VTK Render Window")
-        # self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint)
         self.deleteIcon = ".\data\\delete.svg"
         self.logIcon = ".\data\\logo.png"
         self.needle_file = ".\data\\needle.stl"
         self.tumor_file = ".\data\\mass.stl"
         self.focal_point = [-100, -390, 250]
-
         self.REFRESH_RATE = 180
         self.liver_visible = True
         self.skelton_visible = True
         self.tumor_visible = True
         self.live_is_wireframe = False
+
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
         self.zoom_var = 0.0
@@ -41,11 +40,6 @@ class RenderWindow(Qt.QMainWindow):
         tb.setIconSize(QtCore.QSize(100, 100))
         tb.setStyleSheet("background-color: black; icon-size: 100px 100px;")
         tb.addAction(new)
-
-        exit = QAction(QtGui.QIcon(self.deleteIcon), "exit", self)
-        exit.triggered.connect(self.close_application)
-        #tb.setStyleSheet("width: 200px")
-        tb.addAction(exit)
 
         print("VTK Render Window Start")
         # setup Qt frame
@@ -81,9 +75,6 @@ class RenderWindow(Qt.QMainWindow):
         # create liver actor to be added later on
         liver_poly_data = sources[1].GetOutput()
 
-        # delaunay3D = vtk.vtkDelaunay3D()
-        # delaunay3D.SetInputData(liver_poly_data)
-
         triangles = vtk.vtkTriangleFilter()
         triangles.SetInputData(liver_poly_data)
         triangles.Update()
@@ -98,7 +89,6 @@ class RenderWindow(Qt.QMainWindow):
         decimated.ShallowCopy(decimate.GetOutput())
 
         stlMapper = vtk.vtkPolyDataMapper()
-        # stlMapper.SetInputConnection(sources[1].GetOutputPort())
         stlMapper.SetInputData(decimated)
         stlMapper.SetScalarVisibility(0)
         self.liver_actor = vtk.vtkActor()
@@ -125,27 +115,18 @@ class RenderWindow(Qt.QMainWindow):
         # load needle and create actor
         needle_reader = vtk.vtkSTLReader()
         needle_reader.SetFileName(self.needle_file)
-        # needle_poly = needle_reader.GetOutput()
-        # print(needle_poly)
-        # needle_reader = vtk.vtkArrowSource()
-        # needle_poly = needle_reader.GetOutput()
-        # print(needle_poly)
         needle_mapper = vtk.vtkPolyDataMapper()
         needle_mapper.SetInputConnection(needle_reader.GetOutputPort())
-        # needle_mapper.SetScalarVisibility(0)
         self.needle_actor = vtk.vtkActor()
         self.needle_actor.SetMapper(needle_mapper)
         self.needle_actor.SetScale(5)
         self.needle_actor.GetProperty().SetColor([1, 1, 1])
         self.needle_actor.GetProperty().SetOpacity(1)
         self.needle_actor.SetOrigin(-16.8, 1.5, 3.0)
-        # print(self.needle_actor)
-        # print("i = " + str(self.i) + self.needle_actor.GetPoint(self.i))
 
         # create 3d cursor attached to the tip of the needle
         self.cursor_3d = vtk.vtkCursor3D()
         self.cursor_3d.SetModelBounds(-300, 300, -300, 300, -300, 300)
-        # self.cursor_3d.AllOn()
         self.cursor_3d.OutlineOff()
         self.cursor_3d.XShadowsOff()
         self.cursor_3d.YShadowsOff()
@@ -172,43 +153,12 @@ class RenderWindow(Qt.QMainWindow):
         self.tumor_actor.GetProperty().SetOpacity(1)
         self.tumor_actor.GetProperty().SetRepresentationToSurface()
 
-        # self.tip = vtk.vtkSphereSource()
-        # self.tip.SetRadius(5.0)
-        # self.tip.SetCenter(self.needle_actor.GetPosition())
-        # tip_mapper = vtk.vtkPolyDataMapper()
-        # tip_mapper.SetInputConnection(self.tip.GetOutputPort())
-        # self.tip_actor = vtk.vtkActor()
-        # self.tip_actor.SetMapper(tip_mapper)
-        # self.tip_actor.GetProperty().SetColor([1, 0, 0])
-        # # assembly
-        # self.assembly = vtk.vtkAssembly()
-        # self.assembly.AddPart(self.needle_actor)
-        # self.assembly.AddPart(self.tip_actor)
-
         self.main_ren.AddVolume(self.volume)
         self.main_ren.AddActor(self.liver_actor)
         self.main_ren.AddActor(self.tumor_actor)
 
         self.main_ren.AddActor(self.needle_actor)
         self.main_ren.AddActor(self.cursor_actor)
-        # self.main_ren.AddActor(self.assembly)
-
-        # logo
-        # reader = vtk.vtkPNGReader()
-        # reader.SetFileName("../data/logo.png")
-        # reader.Update()
-        # logo = vtk.vtkLogoRepresentation()
-        # logo.SetImage(reader.GetOutput())
-        # logo.SetPosition(10,10)
-        # logo.GetImageProperty().SetOpacity(1.0)
-        # logoWidget = vtk.vtkLogoWidget()
-
-        # logo.ProportionalResizeOn()
-        # logo.SetPosition(20, 20)
-        # logo.SetPosition2(10,10)
-        # logoWidget = vtk.vtkLogoWidget()
-
-        # imageActor.SetInputData(reader.GetOutput())
 
         # Patient Info
         todaystr = date.today().strftime("%m-%d-%Y")
@@ -219,47 +169,8 @@ class RenderWindow(Qt.QMainWindow):
             "Patient name: Alex Smith\nAge: 40 - Male\nDate: "+todaystr)
         self.main_ren.AddActor(self.txtActor)
 
-        # self.main_ren.AddActor(self.txtActor(
-        #     2, 980, 15, 'Patient name: Alex Smith'))
-        # self.main_ren.AddActor(self.txtActor(2, 960, 15, 'Age: 40 - F'))
-
-        # self.main_ren.AddActor(self.txtActor(2, 940, 15, todaystr))
-
-        # Keyboard
-        # self.main_ren.AddActor(self.txtActor(
-        #     2, 84, 20, 'Press "L" to turn on/off the LIVER'))
-        # self.main_ren.AddActor(self.txtActor(
-        #     2, 64, 20, 'Press "S" to turn on/off the SKELETON'))
-        # self.main_ren.AddActor(self.txtActor(
-        #     2, 44, 20, 'Press "T" to turn on/off the TUMOR'))
-        # self.main_ren.AddActor(self.txtActor(
-        #     2, 24, 20, 'Press "W" to turn on/off the WIREFRAME for liver'))
-        # self.main_ren.AddActor(self.txtActor(
-        #     2, 4, 20, 'Press "Alt + F4" for EXIT'))
-
         # render side window
         print("render side screen 1")
-        # side_ren1 = self.vtkRender(1)
-        # # side_ren1.AddViewProp(logo)
-        # # logo.SetRenderer(side_ren1)
-        # self.rw.AddRenderer(side_ren1)
-
-        # logoWidget.SetInteractor(self.iren)
-        # logoWidget.SetRepresentation(logo)
-        # logoWidget.On()
-        # print("NINA")
-
-        # side_ren1.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
-        # side_ren1.SetActiveCamera(self.camera)
-        # side_ren1.AddActor(self.liver_actor)
-        #
-        # side_ren1.ResetCamera()
-        # side_ren1.ResetCameraClippingRange()
-
-        # side_ren2 = self.vtkRender(2)
-        # (actors, reslices) = self.slice(sources[0])
-        # side_ren2.AddActor(actors)
-        # self.rw.AddRenderer(side_ren2)
         self.slice_index = 0
         (actors, self.reslices) = self.slice(sources[0])
         for i in range(len(actors)):
@@ -270,16 +181,10 @@ class RenderWindow(Qt.QMainWindow):
         self.vtkViewportBorder()
         self.frame.setLayout(self.vl)
         self.setCentralWidget(self.frame)
-        # liver_pos = self.liver_actor.GetPosition()
-        # print("liver is at : " + str(self.liver_actor.GetPosition()))
-        # self.cursor_3d.SetFocalPoint(liver_pos)
-        # print("before" + str(self.camera.GetFocalPoint()))
-        # self.camera.SetFocalPoint(liver_pos)
 
         self.main_ren.ResetCamera()
         self.main_ren.ResetCameraClippingRange()
         self.camera.SetFocalPoint(self.focal_point)
-        # print("after" + str(self.camera.GetFocalPoint()))
 
         self.show()
         self.rw.Render()
@@ -328,7 +233,6 @@ class RenderWindow(Qt.QMainWindow):
         if press_key == "F3":
             self.slice_index = 2
             self.key_hold = True
-
 
     def key_release_func(self, caller, KeyReleaseEvent):
         released_key = self.iren.GetKeySym()
@@ -396,7 +300,6 @@ class RenderWindow(Qt.QMainWindow):
             matrix.SetElement(1, 3, center[1])
             matrix.SetElement(2, 3, center[2])
 
-
     def callback_func(self, caller, timer_event):
         # fetch the position data
         position = self.vivecontrol.devices["controller_1"].get_pose_euler()
@@ -453,6 +356,7 @@ class RenderWindow(Qt.QMainWindow):
                 self.needle_actor.SetOrientation(
                     -position[5], -position[4], -position[3])
 
+
             print(self.key_lock)
             if self.key_lock:
                 center = self.needle_actor.GetPosition()
@@ -501,6 +405,7 @@ class RenderWindow(Qt.QMainWindow):
             #         matrix.SetElement(1, 3, center[1])
             #         matrix.SetElement(2, 3, center[2])
         # self.needle_actor.GetProperty().SetRepresentationToSurface()
+
         if self.live_is_wireframe:
             self.liver_actor.GetProperty().SetRepresentationToWireframe()
         self.rw.Render()
