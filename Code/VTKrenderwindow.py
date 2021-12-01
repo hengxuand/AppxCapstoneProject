@@ -445,7 +445,7 @@ class RenderWindow(Qt.QMainWindow):
 
         for pos in range(9):
             ren = vtk.vtkRenderer()
-            ren.SetBackground(85, 85, 85)
+            ren.SetBackground(0.4, 0.4, 0.4)
             ren.SetViewport(xmins[pos], ymins[pos], xmaxs[pos], ymaxs[pos])
             self.rw.AddRenderer(ren)
 
