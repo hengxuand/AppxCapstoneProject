@@ -67,6 +67,7 @@ class RenderWindow(Qt.QMainWindow):
 
         # register callback
         self.key_hold = False
+        self.key_lock = False
         self.iren.CreateRepeatingTimer(int(1 / self.REFRESH_RATE))
         self.iren.AddObserver("TimerEvent", self.callback_func)
         self.iren.AddObserver("KeyPressEvent", self.key_press_func)
@@ -369,26 +370,12 @@ class RenderWindow(Qt.QMainWindow):
             self.key_hold = False
 
         if released_key == "F4":
+            print(self.key_lock)
+            if self.key_lock:
+                self.key_lock = False
+            else:
+                self.key_lock = True
 
-            center = self.needle_actor.GetPosition()
-
-            for i in range(3):
-                reslice = self.reslices[i]
-                matrix = reslice.GetResliceAxes()
-                mcenter = matrix.MultiplyPoint((0, 0, 0, 1))
-
-                if i == 0:
-                    matrix.SetElement(0, 3, mcenter[0])
-                    matrix.SetElement(1, 3, mcenter[1])
-                    matrix.SetElement(2, 3, center[1])
-                if i == 1:
-                    matrix.SetElement(0, 3, mcenter[0])
-                    matrix.SetElement(1, 3, -center[2])
-                    matrix.SetElement(2, 3, mcenter[2])
-                if i == 2:
-                    matrix.SetElement(0, 3, center[0])
-                    matrix.SetElement(1, 3, mcenter[1])
-                    matrix.SetElement(2, 3, mcenter[2])
 
     def MouseMoveCallback(self, obj, event):
         (lastX, lastY) = self.iren.GetLastEventPosition()
@@ -466,6 +453,27 @@ class RenderWindow(Qt.QMainWindow):
                 self.needle_actor.SetOrientation(
                     -position[5], -position[4], -position[3])
 
+            print(self.key_lock)
+            if self.key_lock:
+                center = self.needle_actor.GetPosition()
+
+                for i in range(3):
+                    reslice = self.reslices[i]
+                    matrix = reslice.GetResliceAxes()
+                    mcenter = matrix.MultiplyPoint((0, 0, 0, 1))
+
+                    if i == 0:
+                        matrix.SetElement(0, 3, mcenter[0])
+                        matrix.SetElement(1, 3, mcenter[1])
+                        matrix.SetElement(2, 3, center[1])
+                    if i == 1:
+                        matrix.SetElement(0, 3, mcenter[0])
+                        matrix.SetElement(1, 3, -center[2])
+                        matrix.SetElement(2, 3, mcenter[2])
+                    if i == 2:
+                        matrix.SetElement(0, 3, center[0])
+                        matrix.SetElement(1, 3, mcenter[1])
+                        matrix.SetElement(2, 3, mcenter[2])
                 # self.assembly.SetPosition(position[0] * -700, position[1]
                 #                           * 700 - 400, position[2] * -300)
                 # self.assembly.SetOrientation(
@@ -551,10 +559,20 @@ class RenderWindow(Qt.QMainWindow):
     def vtkRender(self, pos):
         # Define viewport ranges.
         # Index 0: main view 1: logo view, 2: slice view top 3:slice view front 4: slice view side
-        xmins = [0, 0.7, 0.7, 0.7]
-        xmaxs = [0.699, 0.999, 0.999, 0.999]
-        ymins = [0, 0.601, 0.301, 0.001]
-        ymaxs = [1, 0.9, 0.6, 0.3]
+        # xmins = [0.002, 0.501, 0.002, 0.501]
+        # xmaxs = [0.499, 0.998, 0.499, 0.998]
+        # ymins = [0.501, 0.501, 0.002, 0.002]
+        # ymaxs = [0.998, 0.998, 0.499, 0.499]
+
+        # xmins = [0, 0.7, 0.7, 0.7]
+        # xmaxs = [0.699, 0.999, 0.999, 0.999]
+        # ymins = [0, 0.6676, 0.3343, 0.001]
+        # ymaxs = [1, 0.9999, 0.6666, 0.3333]
+
+        xmins = [0.001, 0.5, 0.5, 0.75]
+        xmaxs = [0.499, 0.999, 0.749, 0.999]
+        ymins = [0.001, 0.6, 0.001, 0.001]
+        ymaxs = [0.999, 0.999, 0.599, 0.599]
 
         ren = vtk.vtkRenderer()
         ren.SetViewport(xmins[pos], ymins[pos], xmaxs[pos], ymaxs[pos])
@@ -562,12 +580,22 @@ class RenderWindow(Qt.QMainWindow):
         return ren
 
     def vtkViewportBorder(self):
-        xmins = [0.699, 0.999, 0.7, 0.7, 0.7, 0.7, 0, 0, 0]
-        xmaxs = [0.7, 1, 0.999, 0.999, 0.999, 0.999, 0.001, 0.699, 0.699]
-        ymins = [0, 0, 0.999, 0.6, 0.3, 0, 0, 0.999, 0]
-        ymaxs = [1, 1, 1, 0.601, 0.301, 0.001, 1, 1, 0.001]
+        # xmins = [0, 0, 0, 0, 0.499, 0.998]
+        # xmaxs = [1, 1, 1, 0.002, 0.501, 1]
+        # ymins = [0, 0.499, 0.998, 0, 0, 0]
+        # ymaxs = [0.002, 0.501, 1, 1, 1, 1]
 
-        for pos in range(9):
+        # xmins = [0.699, 0.999, 0.7, 0.7, 0.7, 0.7, 0, 0, 0]
+        # xmaxs = [0.7, 1, 0.999, 0.999, 0.999, 0.999, 0.001, 0.699, 0.699]
+        # ymins = [0, 0, 0.999, 0.6664, 0.3333, 0, 0, 0.999, 0]
+        # ymaxs = [1, 1, 1, 0.6676, 0.3343, 0.001, 1, 1, 0.001]
+
+        xmins = [0, 0.499, 0.999, 0, 0, 0.749, 0.5]
+        xmaxs = [0.001, 0.5, 1, 1, 1, 0.75, 1]
+        ymins = [0, 0, 0, 0, 0.999, 0.001, 0.599]
+        ymaxs = [1, 1, 1, 0.001, 1, 0.6, 0.6]
+
+        for pos in range(7):
             ren = vtk.vtkRenderer()
             ren.SetBackground(85, 85, 85)
             ren.SetViewport(xmins[pos], ymins[pos], xmaxs[pos], ymaxs[pos])
