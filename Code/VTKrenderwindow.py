@@ -24,7 +24,7 @@ class RenderWindow(Qt.QMainWindow):
         self.liver_visible = True
         self.skelton_visible = True
         self.tumor_visible = True
-        self.live_is_wireframe = False
+        self.liver_is_wireframe = False
 
         # setup vive controller & check the if controller is in the range
         self.vivecontrol = triad_openvr.triad_openvr()
@@ -182,13 +182,35 @@ class RenderWindow(Qt.QMainWindow):
             "Patient name: Alex Smith\nAge: 40 - Male\nDate: "+todaystr)
         self.main_ren.AddActor(self.txtActor)
 
+        # 2d cursor
+        self.cursors_2d_x = [0.0, 0.0, 0.0]
+        self.cursors_2d_y = [0.0, 0.0, 0.0]
+        for i in range(3):
+            # cursor = vtk.vtkCursor2D()
+            # cursor.SetModelBounds(-200, 200, -200, 200, 0, 0)
+            # cursor.OutlineOff()
+            # cursor.TranslationModeOn()
+            # cursor.AllOn()
+            # cursor.SetFocalPoint(5.0, 5.0, 0.0)
+            # cursor.Update()
+            # cursor2D_mapper = vtk.vtkPolyDataMapper()
+            # cursor2D_mapper.SetInputConnection(cursor.GetOutputPort())
+            # cursor2D_actor = vtk.vtkActor()
+            # cursor2D_actor.SetMapper(cursor2D_mapper)
+            # cursor2D_actor.GetProperty().SetColor([0.7, 1, 0.4])
+            # self.cursors_2d.append(cursor2D_actor)
+            cursor = vtk.vtkLineSource()
+            cursor.SetPoint1(self.cursors_2d_x)
+
         # render side window
         print("render side screen 1")
         self.slice_index = 0
         (actors, self.reslices) = self.slice(sources[0])
+        print(len(actors))
         for i in range(len(actors)):
             side_ren = self.vtkRender(i + 1)
             side_ren.AddActor(actors[i])
+            side_ren.AddActor(self.cursors_2d[i])
             self.rw.AddRenderer(side_ren)
 
         self.vtkViewportBorder()
@@ -271,12 +293,12 @@ class RenderWindow(Qt.QMainWindow):
                 self.tumor_actor.VisibilityOn()
                 self.tumor_visible = True
         elif released_key == 'w':
-            if self.live_is_wireframe:
+            if self.liver_is_wireframe:
                 self.liver_actor.GetProperty().SetRepresentationToSurface()
-                self.live_is_wireframe = False
+                self.liver_is_wireframe = False
             else:
                 self.liver_actor.GetProperty().SetRepresentationToWireframe()
-                self.live_is_wireframe = True
+                self.liver_is_wireframe = True
         if released_key == "F1":
             self.key_hold = False
 
@@ -371,6 +393,13 @@ class RenderWindow(Qt.QMainWindow):
             # print(self.key_lock)
             if self.key_lock:
                 center = self.needle_actor.GetPosition()
+                print("center : " + str(center))
+                # move the 2d cursors
+                self.cursors_2d[0].SetPosition(
+                    center[0], (center[2] - 150) * -1, 0)
+                self.cursors_2d[1].SetPosition(center[0], (center[1] + 450), 0)
+                self.cursors_2d[2].SetPosition(
+                    (center[2] - 150) * -1, center[1] + 450, 0)
 
                 for i in range(3):
                     reslice = self.reslices[i]
@@ -417,7 +446,7 @@ class RenderWindow(Qt.QMainWindow):
             #         matrix.SetElement(2, 3, center[2])
         # self.needle_actor.GetProperty().SetRepresentationToSurface()
 
-        if self.live_is_wireframe:
+        if self.liver_is_wireframe:
             self.liver_actor.GetProperty().SetRepresentationToWireframe()
         self.rw.Render()
 
