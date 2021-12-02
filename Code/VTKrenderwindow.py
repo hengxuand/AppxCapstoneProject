@@ -34,13 +34,6 @@ class RenderWindow(Qt.QMainWindow):
         # logo
         self.setWindowIcon(QtGui.QIcon(self.logIcon))
 
-        tb = self.addToolBar("Logo")
-        icon = QtGui.QIcon(self.logIcon)
-        new = QAction(icon, "new", self)
-        tb.setIconSize(QtCore.QSize(100, 100))
-        tb.setStyleSheet("background-color: black; icon-size: 100px 100px;")
-        tb.addAction(new)
-
         print("VTK Render Window Start")
         # setup Qt frame
         self.frame = Qt.QFrame()
@@ -71,6 +64,25 @@ class RenderWindow(Qt.QMainWindow):
 
         # get sources
         sources = self.get_sources(ct_file, stl_file)
+
+        # logo actor
+        logo_reader = vtk.vtkPNGReader()
+        logo_reader.SetFileName(self.logIcon)
+        logo_reader.Update()
+        logo_resize = vtk.vtkImageResize()
+        logo_resize.SetInputData(logo_reader.GetOutput())
+        logo_resize.SetOutputDimensions(200, 170, 1)
+        logo_resize.Update()
+
+        image_mapper = vtk.vtkImageMapper()
+        image_mapper.SetInputData(logo_resize.GetOutput())
+        image_mapper.Update()
+        image_mapper.SetColorLevel(128.0)
+        image_mapper.SetColorWindow(256.0)
+
+        self.logo_actor = vtk.vtkActor2D()
+        self.logo_actor.SetMapper(image_mapper)
+        self.logo_actor.SetPosition(30, 1930)
 
         # create liver actor to be added later on
         liver_poly_data = sources[1].GetOutput()
@@ -157,6 +169,7 @@ class RenderWindow(Qt.QMainWindow):
         self.main_ren.AddActor(self.liver_actor)
         self.main_ren.AddActor(self.tumor_actor)
 
+        self.main_ren.AddActor(self.logo_actor)
         self.main_ren.AddActor(self.needle_actor)
         self.main_ren.AddActor(self.cursor_actor)
 
@@ -274,12 +287,11 @@ class RenderWindow(Qt.QMainWindow):
             self.key_hold = False
 
         if released_key == "F4":
-            print(self.key_lock)
+            # print(self.key_lock)
             if self.key_lock:
                 self.key_lock = False
             else:
                 self.key_lock = True
-
 
     def MouseMoveCallback(self, obj, event):
         (lastX, lastY) = self.iren.GetLastEventPosition()
@@ -356,8 +368,7 @@ class RenderWindow(Qt.QMainWindow):
                 self.needle_actor.SetOrientation(
                     -position[5], -position[4], -position[3])
 
-
-            print(self.key_lock)
+            # print(self.key_lock)
             if self.key_lock:
                 center = self.needle_actor.GetPosition()
 
