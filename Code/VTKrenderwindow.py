@@ -183,24 +183,32 @@ class RenderWindow(Qt.QMainWindow):
         self.main_ren.AddActor(self.txtActor)
 
         # 2d cursor
-        self.cursors_2d_x = [0.0, 0.0, 0.0]
-        self.cursors_2d_y = [0.0, 0.0, 0.0]
+        self.cursors_x = [[300.0, 0.0, 1.0], [-300.0, 0.0, 1.0]]
+        self.cursors_y = [[0.0, 300.0, 1.0], [0.0, -300.0, 1.0]]
+        self.cursors_x_actor = []
+        self.cursors_y_actor = []
+
         for i in range(3):
-            # cursor = vtk.vtkCursor2D()
-            # cursor.SetModelBounds(-200, 200, -200, 200, 0, 0)
-            # cursor.OutlineOff()
-            # cursor.TranslationModeOn()
-            # cursor.AllOn()
-            # cursor.SetFocalPoint(5.0, 5.0, 0.0)
-            # cursor.Update()
-            # cursor2D_mapper = vtk.vtkPolyDataMapper()
-            # cursor2D_mapper.SetInputConnection(cursor.GetOutputPort())
-            # cursor2D_actor = vtk.vtkActor()
-            # cursor2D_actor.SetMapper(cursor2D_mapper)
-            # cursor2D_actor.GetProperty().SetColor([0.7, 1, 0.4])
-            # self.cursors_2d.append(cursor2D_actor)
-            cursor = vtk.vtkLineSource()
-            cursor.SetPoint1(self.cursors_2d_x)
+            cursor_line_x = vtk.vtkLineSource()
+            cursor_line_x.SetPoint1(self.cursors_x[0])
+            cursor_line_x.SetPoint2(self.cursors_x[1])
+            cursor_x_mapper = vtk.vtkPolyDataMapper()
+            cursor_x_mapper.SetInputConnection(cursor_line_x.GetOutputPort())
+            cursor_x_actor = vtk.vtkActor()
+            cursor_x_actor.SetMapper(cursor_x_mapper)
+            cursor_x_actor.GetProperty().SetLineWidth(4)
+            cursor_x_actor.GetProperty().SetColor([0.7, 1, 0.4])
+            self.cursors_x_actor.append(cursor_x_actor)
+            cursor_line_y = vtk.vtkLineSource()
+            cursor_line_y.SetPoint1(self.cursors_y[0])
+            cursor_line_y.SetPoint2(self.cursors_y[1])
+            cursor_y_mapper = vtk.vtkPolyDataMapper()
+            cursor_y_mapper.SetInputConnection(cursor_line_y.GetOutputPort())
+            cursor_y_actor = vtk.vtkActor()
+            cursor_y_actor.SetMapper(cursor_y_mapper)
+            cursor_y_actor.GetProperty().SetLineWidth(2)
+            cursor_y_actor.GetProperty().SetColor([0.7, 1, 0.4])
+            self.cursors_y_actor.append(cursor_y_actor)
 
         # render side window
         print("render side screen 1")
@@ -210,7 +218,8 @@ class RenderWindow(Qt.QMainWindow):
         for i in range(len(actors)):
             side_ren = self.vtkRender(i + 1)
             side_ren.AddActor(actors[i])
-            side_ren.AddActor(self.cursors_2d[i])
+            side_ren.AddActor(self.cursors_x_actor[i])
+            side_ren.AddActor(self.cursors_y_actor[i])
             self.rw.AddRenderer(side_ren)
 
         self.vtkViewportBorder()
@@ -395,11 +404,18 @@ class RenderWindow(Qt.QMainWindow):
                 center = self.needle_actor.GetPosition()
                 print("center : " + str(center))
                 # move the 2d cursors
-                self.cursors_2d[0].SetPosition(
-                    center[0], (center[2] - 150) * -1, 0)
-                self.cursors_2d[1].SetPosition(center[0], (center[1] + 450), 0)
-                self.cursors_2d[2].SetPosition(
-                    (center[2] - 150) * -1, center[1] + 450, 0)
+                self.cursors_x_actor[0].SetPosition(
+                    0, (center[2] - 150) * -1, 1)
+                self.cursors_y_actor[0].SetPosition(
+                    center[0], 0, 1)
+                self.cursors_x_actor[1].SetPosition(
+                    0, (center[1] + 450), 1)
+                self.cursors_y_actor[1].SetPosition(
+                    center[0], 0, 1)
+                self.cursors_x_actor[2].SetPosition(
+                    0, center[1] + 450, 1)
+                self.cursors_y_actor[2].SetPosition(
+                    (center[2] - 150) * -1, 0, 1)
 
                 for i in range(3):
                     reslice = self.reslices[i]
