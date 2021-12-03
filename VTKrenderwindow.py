@@ -1,10 +1,7 @@
 import triad_openvr
 import vtk
 import sys
-import math
-from PyQt5 import (Qt, QtGui, QtCore, QtGui, QtWidgets)
-from PyQt5.QtWidgets import QAction
-from PyQt5.QtGui import QIcon
+from PyQt5 import (Qt, QtGui, QtGui)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from datetime import date
@@ -132,7 +129,7 @@ class RenderWindow(Qt.QMainWindow):
         self.needle_actor = vtk.vtkActor()
         self.needle_actor.SetMapper(needle_mapper)
         self.needle_actor.SetScale(5)
-        self.needle_actor.GetProperty().SetColor([1, 1, 1])
+        self.needle_actor.GetProperty().SetColor([0.2, 1, 0.6])
         self.needle_actor.GetProperty().SetOpacity(1)
         self.needle_actor.SetOrigin(-16.8, 1.5, 3.0)
 
@@ -214,7 +211,6 @@ class RenderWindow(Qt.QMainWindow):
         print("render side screen 1")
         self.slice_index = 0
         (actors, self.reslices) = self.slice(sources[0])
-        print(len(actors))
         for i in range(len(actors)):
             side_ren = self.vtkRender(i + 1)
             side_ren.AddActor(actors[i])
@@ -393,7 +389,7 @@ class RenderWindow(Qt.QMainWindow):
                                               * 700 - 400, position[2] * -300)
             else:
                 # when release the trigger, change the color of needle to white.
-                self.needle_actor.GetProperty().SetColor([1, 1, 1])
+                self.needle_actor.GetProperty().SetColor([0.2, 1, 0.6])
                 self.needle_actor.SetPosition(position[0] * -700, position[1]
                                               * 700 - 400, position[2] * -300)
                 self.needle_actor.SetOrientation(
@@ -402,7 +398,6 @@ class RenderWindow(Qt.QMainWindow):
             # print(self.key_lock)
             if self.key_lock:
                 center = self.needle_actor.GetPosition()
-                print("center : " + str(center))
                 # move the 2d cursors
                 self.cursors_x_actor[0].SetPosition(
                     0, (center[2] - 150) * -1, 1)
@@ -466,23 +461,23 @@ class RenderWindow(Qt.QMainWindow):
             self.liver_actor.GetProperty().SetRepresentationToWireframe()
         self.rw.Render()
 
-    def needle(self):
-        reader = vtk.vtkSTLReader()
-        reader.SetFileName("../data/handler.stl")
+    # def needle(self):
+    #     reader = vtk.vtkSTLReader()
+    #     reader.SetFileName("../data/handler.stl")
 
-        self.collide.SetInputConnection(1, reader.GetOutputPort())
-        needle_mapper = vtk.vtkPolyDataMapper()
-        needle_mapper.SetInputConnection(reader.GetOutputPort())
-        needle_mapper.SetScalarVisibility(0)
+    #     self.collide.SetInputConnection(1, reader.GetOutputPort())
+    #     needle_mapper = vtk.vtkPolyDataMapper()
+    #     needle_mapper.SetInputConnection(reader.GetOutputPort())
+    #     needle_mapper.SetScalarVisibility(0)
 
-        needle_actor = vtk.vtkActor()
-        needle_actor.SetMapper(needle_mapper)
+    #     needle_actor = vtk.vtkActor()
+    #     needle_actor.SetMapper(needle_mapper)
 
-        needle_actor.SetPosition(0, 0, 0)
-        needle_actor.GetProperty().SetColor([1, 1, 1])
-        needle_actor.GetProperty().SetOpacity(1)
+    #     needle_actor.SetPosition(0, 0, 0)
+    #     needle_actor.GetProperty().SetColor([1, 1, 1])
+    #     needle_actor.GetProperty().SetOpacity(1)
 
-        return needle_actor
+        # return needle_actor
 
     def vtkColor(self):
         color_transfer = vtk.vtkColorTransferFunction()
