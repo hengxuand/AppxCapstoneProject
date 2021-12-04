@@ -65,11 +65,14 @@ Download all the files from [Google](https://drive.google.com/drive/folders/1L5b
 # Features
 
 - Keyboard:
-  - "W" - Toggle the liver between wireframe version and surface version.
-  - "S" - Toggle the skeleton visibility.
-  - "L" - Toggle the liver visibility.
-  - "T" - Toggle the tumor visibility.
-  - "F4" - Toggle the 2-D-slice views' simultaneously update along the needle.
+  - "W": Toggle the liver between wireframe version and surface version.
+  - "S": Toggle the skeleton visibility.
+  - "L": Toggle the liver visibility.
+  - "T": Toggle the tumor visibility.
+  - "F1": Hold and toggle the first 2D slice view
+  - "F2": Hold and toggle the second 2D slice view
+  - "F3": Hold and toggle the thrid 2D slice view
+  - "F4": Toggle the 2-D-slice views' simultaneously update along the needle.
 - Controller:
   - Trigger - Ultra-sound processing.
   - Trackpad pressing - Rotation of the camera.
