@@ -68,7 +68,7 @@ class RenderWindow(Qt.QMainWindow):
         logo_reader.Update()
         logo_resize = vtk.vtkImageResize()
         logo_resize.SetInputData(logo_reader.GetOutput())
-        logo_resize.SetOutputDimensions(200, 170, 1)
+        logo_resize.SetOutputDimensions(150, 130, 1)
         logo_resize.Update()
 
         image_mapper = vtk.vtkImageMapper()
@@ -173,7 +173,7 @@ class RenderWindow(Qt.QMainWindow):
         # Patient Info
         todaystr = date.today().strftime("%m-%d-%Y")
         self.txtActor = vtk.vtkTextActor()
-        self.txtActor.GetTextProperty().SetFontSize(40)
+        self.txtActor.GetTextProperty().SetFontSize(30)
         self.txtActor.SetPosition(500, 30)
         self.txtActor.SetInput(
             "Patient name: Alex Smith\nAge: 40 - Male\nDate: "+todaystr)
