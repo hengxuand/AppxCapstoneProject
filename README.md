@@ -47,10 +47,42 @@ run:
 
     conda activate csvtk
 
+To install openvr, run: 
+    
+    pip install openvr
+
 ## Download the STL files
 
 Download all the files from [Google](https://drive.google.com/drive/folders/1L5b4ZtSEj2PbfLwiy2nHqTtkQs8hzTMZ?usp=sharing) and store them in the data folder in this project.
 
+
+## External softwares:
+
+ - Download Steam and SteamVR. 
+    - In the SteamVR page, on the right side, click the gear button and click Properties... ![Screenshot](data\steamvr-page.png)
+
+    
+    - On the pop-up window, click BETAS, choose beta - SteamVR Beta Update.![Screenshot](data\SteamVR-BETAS.png)
+ - SteamVR NULL driver configuration.
+    - open the file "Steam\config\steamvr.vrsettings"
+    - In the value of key steamvr, add: 
+        
+        "activateMultipleDrivers" : true,  
+        "forcedDriver": "null",
+    - After the steamvr object, add:  
+      "driver_null" : {  
+           "enable" : true,  
+           "serialNumber" : "Null Serial Number",   
+           "modelNumber" : "Null Model Number",  
+           "windowX" : 0,  
+          "windowY" : 0,  
+          "windowWidth" : 1920,  
+          "windowHeight" : 1080,  
+          "renderWidth" : 1920,  
+          "renderHeight" : 1060,  
+          "secondsFromVsyncToPhotons" : 0.01111111,  
+          "displayFrequency" : 60.0  
+      }
 ## VR Device Setup Tips:
 
 - Plug the base station with the power on the wall.

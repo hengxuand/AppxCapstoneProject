@@ -429,55 +429,10 @@ class RenderWindow(Qt.QMainWindow):
                         matrix.SetElement(0, 3, center[0])
                         matrix.SetElement(1, 3, mcenter[1])
                         matrix.SetElement(2, 3, mcenter[2])
-                # self.assembly.SetPosition(position[0] * -700, position[1]
-                #                           * 700 - 400, position[2] * -300)
-                # self.assembly.SetOrientation(
-                #     -position[5], -position[4], -position[3])
-
-            # controller control slice movement
-            # if controller_status['grip_button']:
-            #     pY = controller_status['trackpad_y']
-            #     print(pY)
-            #
-            #     if pY != 0:
-            #         reslice = self.reslices[self.slice_index]
-            #         reslice.Update()
-            #         matrix = reslice.GetResliceAxes()
-            #         # move the center point that we are slicing through
-            #         center = matrix.MultiplyPoint((0, 0, pY, 1))
-            #         print(center)
-            #         if -194 > center[0]:
-            #             matrix.SetElement(0, 3, -193)
-            #         elif 194 < center[0]:
-            #             matrix.SetElement(0, 3, 193)
-            #         else:
-            #             matrix.SetElement(0, 3, center[0])
-            #
-            #         matrix.SetElement(1, 3, center[1])
-            #         matrix.SetElement(2, 3, center[2])
-        # self.needle_actor.GetProperty().SetRepresentationToSurface()
 
         if self.liver_is_wireframe:
             self.liver_actor.GetProperty().SetRepresentationToWireframe()
         self.rw.Render()
-
-    # def needle(self):
-    #     reader = vtk.vtkSTLReader()
-    #     reader.SetFileName("../data/handler.stl")
-
-    #     self.collide.SetInputConnection(1, reader.GetOutputPort())
-    #     needle_mapper = vtk.vtkPolyDataMapper()
-    #     needle_mapper.SetInputConnection(reader.GetOutputPort())
-    #     needle_mapper.SetScalarVisibility(0)
-
-    #     needle_actor = vtk.vtkActor()
-    #     needle_actor.SetMapper(needle_mapper)
-
-    #     needle_actor.SetPosition(0, 0, 0)
-    #     needle_actor.GetProperty().SetColor([1, 1, 1])
-    #     needle_actor.GetProperty().SetOpacity(1)
-
-        # return needle_actor
 
     def vtkColor(self):
         color_transfer = vtk.vtkColorTransferFunction()
