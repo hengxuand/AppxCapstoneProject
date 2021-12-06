@@ -79,7 +79,7 @@ class RenderWindow(Qt.QMainWindow):
 
         self.logo_actor = vtk.vtkActor2D()
         self.logo_actor.SetMapper(image_mapper)
-        self.logo_actor.SetPosition(30, 1930)
+        self.logo_actor.SetPosition(30, 30)
 
         # create liver actor to be added later on
         liver_poly_data = sources[1].GetOutput()
@@ -174,7 +174,7 @@ class RenderWindow(Qt.QMainWindow):
         todaystr = date.today().strftime("%m-%d-%Y")
         self.txtActor = vtk.vtkTextActor()
         self.txtActor.GetTextProperty().SetFontSize(40)
-        self.txtActor.SetPosition(10, 20)
+        self.txtActor.SetPosition(500, 30)
         self.txtActor.SetInput(
             "Patient name: Alex Smith\nAge: 40 - Male\nDate: "+todaystr)
         self.main_ren.AddActor(self.txtActor)
@@ -342,7 +342,6 @@ class RenderWindow(Qt.QMainWindow):
     def callback_func(self, caller, timer_event):
         # fetch the position data
         position = self.vivecontrol.devices["controller_1"].get_pose_euler()
-        position[4] = position[4] + 90
         # fetch the controller button data
         controller_status = self.vivecontrol.devices["controller_1"].get_controller_inputs(
         )
@@ -350,8 +349,9 @@ class RenderWindow(Qt.QMainWindow):
         txt = ""
         if not hasattr(position, '__iter__'):
             self.needle_actor.GetProperty().SetColor([1, 1, 0])
-            print("\r" + "Waiting", end="")
+            print("\r" + "Waiting for controller...", end="")
         else:
+            position[4] = position[4] + 90
             for each in position:
                 txt += "%.4f" % each
                 txt += " "
