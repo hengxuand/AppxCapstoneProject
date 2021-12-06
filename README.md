@@ -59,10 +59,10 @@ Download all the files from [Google](https://drive.google.com/drive/folders/1L5b
 ## External softwares:
 
  - Download Steam and SteamVR. 
-    - In the SteamVR page, on the right side, click the gear button and click Properties... ![Screenshot](data\steamvr-page.png)
+    - In the SteamVR page, on the right side, click the gear button and click Properties... ![alt text](https://github.com/hengxuand/AppxCapstoneProject/blob/main/data/steamvr-page.png?raw=true)
 
-    
-    - On the pop-up window, click BETAS, choose beta - SteamVR Beta Update.![Screenshot](data\SteamVR-BETAS.png)
+
+    - On the pop-up window, click BETAS, choose beta - SteamVR Beta Update.![alt text](https://github.com/hengxuand/AppxCapstoneProject/blob/main/data/SteamVR-BETAS.png?raw=true)
  - SteamVR NULL driver configuration.
     - open the file "Steam\config\steamvr.vrsettings"
     - In the value of key steamvr, add: 
